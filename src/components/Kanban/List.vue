@@ -1,112 +1,60 @@
-<template>
-  <draggable class="list-group" element="ul" v-model="list" :options="dragOptions" :move="onMove" @start="isDragging=true" @end="isDragging=false">
-    <transition-group type="transition" :name="'flip-list'">
-      <li class="list-group-item" v-for="element in list" :key="element.order">
-        <i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i>
-        {{element.name}}
-        <span class="badge">{{element.order}}</span>
-      </li>
-    </transition-group>
-  </draggable>
+<template lang="html">
+  <v-layout column>
+    <singlecard v-if="isShow"
+                @close="isShow = false"
+                :isShow="isShow"></singlecard>
+    <v-flex xs12>
+      <vddl-draggable class="panel__body--item"
+                      :draggable="item"
+                      :index="index"
+                      :disable-if="disable"
+                      :selected="selectedEvent"
+                      :wrapper="list"
+                      v-bind:class="{'selected': selectedItem === item}"
+      >
+
+        <v-card style="width:100%;">
+
+             <v-card-title>{{item.type}} {{item.id}}</v-card-title>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn icon
+                   @click="isShow = true"
+                   ><v-icon>edit</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </vddl-draggable>
+    </v-flex>
+  </v-layout>
+
 </template>
+
 <script>
-  import draggable from 'vuedraggable'
-
+ import singlecard from './SingleCard'
   export default {
-    name: 'lists',
+    name: 'list',
+    props: ['item', 'list', 'index', 'selected', 'selectedItem', 'disable'],
     components: {
-      draggable,
-
+      singlecard
     },
-    // props: ['list_name', 'list_description',
-    //   'lists', 'list_items',
-    //   'item_text', 'header_color'],
-    props: ['list_name', 'list_description',
-      'lists', 'items',
-      'item_text', 'header_color'],
-
-    data() {
-      return {
-        editItem: null,
-        showForm: false,
+    data(){
+      return{
+        isShow:false,
       }
+
     },
-
-    computed: {
-
-      filteredListItems() {
-
-        return this.list_items.filter(t => {
-          return t.list == this.list_name
-        })
-
-      },
-
-      defaultItem() {
-
-        return {id: 0, text: this.item_text, list: this.list_name}
-
-      },
-      sortableConfig() {
-
-        return {
-          onAdd: this.putItem,
-          draggable: '.draggable-card',
-          group: {name: this.list_name, put: this.list_put}
-        }
-      }
-    },
-
     methods: {
-
-      list_put() {
-
-        return this.lists.filter(t => t !== this.list_name)
-
+      selectedEvent(item){
+        if (typeof(this.selected) === 'function') {
+          this.selected(item);
+        }
       },
 
-      putItem(evt) {
+    },
 
-        let idx = _.findIndex(this.list_items, t => t.id == evt.item.id)
-        let item = this.list_items[idx]
-        item.list = evt.to.dataset.type
-        this.list_items.splice(idx, 1, item)
-
-      },
-
-      showEditForm(item) {
-        this.editItem = item
-        this.showForm = true
-      },
-
-      showNewForm() {
-        this.editItem = null
-        this.showForm = true;
-      },
-
-      closeForm() {
-        this.showForm = false;
-      },
-
-      itemCreated(item) {
-        this.list_items.push(item)
-        this.closeForm()
-      },
-
-      itemEdited(item) {
-        console.log(item)
-        let idx = _.findIndex(this.list_items, t => t.id == item.id)
-        let itm = this.list_items[idx]
-        itm.list = item.list
-        itm.text = item.text
-        this.list_items.splice(idx, 1, itm)
-        this.closeForm()
-      },
-
-      itemCancelled() {
-        this.closeForm()
-      }
-    }
-  }
-
+  };
 </script>
+<style>
+
+</style>
+

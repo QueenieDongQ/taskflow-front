@@ -1,4 +1,4 @@
-<template>
+<template lang="html">
   <v-layout column wrap>
     <v-flex xs12 sm6 offset-sm3>
 

@@ -1,11 +1,11 @@
-<template>
+<template lang="html">
 
     <Project_Card></Project_Card>
 
 </template>
 
 <script>
-  import Project_Card from '@/components/Projects/Project_Card'
+  import Project_Card from './Project_Card'
 
   export default {
 
