@@ -6,9 +6,10 @@ import Project_All from '@/components/Projects/Project_All'
 // import Board from '@/components/Kanban/Board'
 import AdminUser from '@/components/Admin/AdminUser'
 
-import TreeDemo from '@/components/Task/TreeDemo'
 import LeafDetails from '@/components/Task/LeafDetails'
 import RootDetails from '@/components/Task/RootDetails'
+import ShowAllTasks from '@/components/Task/ShowAllTasks'
+import TreeList from '@/components/Task/TreeList'
 Vue.use(Router)
 
 export default new Router({
@@ -28,21 +29,12 @@ export default new Router({
       //
       // }
     },
-    // {
-    //   path: '/boards',
-    //   name: 'boards',
-    //   component: Board
-    // },
     {
       path: '/admin',
       name: 'admin',
       component: AdminUser
     },
-    {
-      path: '/TreeDemo',
-      name: 'TreeDemo',
-      component: TreeDemo
-    },
+
     {
       path: '/LeafDetails',
       name: 'LeafDetails',
@@ -53,23 +45,16 @@ export default new Router({
       name: 'RootDetails',
       component: RootDetails
     },
-    // {
-    //
-    // },
-    // {
-    //   path: '/kanban',
-    //   name: 'kanban',
-    //   component: Kanban
-    // },
-    // {
-    //   path: '/project_all',
-    //   name: 'project_all',
-    //   component: Project_All
-    // },
-    // {
-    //   path: '/board',
-    //   name: 'board',
-    //   component: Board
-    // }
+    {
+      path: '/ShowAllTasks',
+      name: 'ShowAllTasks',
+      component: ShowAllTasks
+    },
+    {
+      path: '/TreeList',
+      name: 'TreeList',
+      component: TreeList
+    },
+
   ]
 })

@@ -12,6 +12,7 @@ Vue.use(Vddl);
 
 Vue.use(Vuetify)
 Vue.use(VueResource)
+
 Vue.config.productionTip = false
 
 // Vue.component('addnewproject',AddNewProject)

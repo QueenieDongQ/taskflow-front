@@ -43,11 +43,13 @@
                 </v-flex>
               </v-layout>
              </v-flex>
-
           </v-layout>
-          <v-layout row>
-            <v-flex xs12>
+
+          <v-layout row justify-center>
+            <v-flex xs6>
                 <v-btn class="primary" v-on:click="onSave">Save</v-btn>
+            </v-flex>
+            <v-flex xs6>
                 <v-btn v-on:click="cancel">Cancel</v-btn>
             </v-flex>
           </v-layout>
@@ -100,7 +102,7 @@
         },
         onSave() {
           console.log(this.user);
-          this.$http.post('api/user/update', JSON.stringify(this.user)).then(response => {
+          this.$http.post('/api/user/update', JSON.stringify(this.user)).then(response => {
             if(response.data.code != 0) {
               this.notify(response.data.error);
             }

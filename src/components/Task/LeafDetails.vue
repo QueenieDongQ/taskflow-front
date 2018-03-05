@@ -88,13 +88,13 @@
                   <v-btn icon><i class="material-icons">swap_horiz</i></v-btn>
                 </v-flex>
 
-                <v-flex xs2>
-                  <v-subheader>Member</v-subheader>
-                </v-flex>
-                <v-flex xs10>
-                  <v-avatar></v-avatar>
-                  <v-btn icon><i class="material-icons">group_add</i></v-btn>
-                </v-flex>
+                <!--<v-flex xs2>-->
+                  <!--<v-subheader>Member</v-subheader>-->
+                <!--</v-flex>-->
+                <!--<v-flex xs10>-->
+                  <!--<v-avatar></v-avatar>-->
+                  <!--<v-btn icon><i class="material-icons">group_add</i></v-btn>-->
+                <!--</v-flex>-->
 
                 <v-flex xs2>
                   <v-subheader>Labels</v-subheader>
