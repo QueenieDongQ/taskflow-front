@@ -102,7 +102,13 @@
         },
         onSave() {
           console.log(this.user);
-          this.$http.post('/api/user/update', JSON.stringify(this.user)).then(response => {
+
+          this.$http.post('/api/user/update', {
+            headers:{
+              'Content-type':'application/vnd.api+json',
+            },
+            body: this.user
+          }).then(response => {
             if(response.data.code != 0) {
               this.notify(response.data.error);
             }

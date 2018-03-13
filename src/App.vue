@@ -73,13 +73,13 @@
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <span class="hidden-xs-only">Project Kanban</span>
     </v-toolbar-title>
-    <v-text-field
-      light
-      solo
-      prepend-icon="search"
-      placeholder="Search"
-      style="max-width: 500px; min-width: 128px"
-    ></v-text-field>
+    <!--<v-text-field-->
+      <!--light-->
+      <!--solo-->
+      <!--prepend-icon="search"-->
+      <!--placeholder="Search"-->
+      <!--style="max-width: 500px; min-width: 128px"-->
+    <!--&gt;</v-text-field>-->
     <div class="d-flex align-center" style="margin-left: auto">
       <v-btn icon>
         <v-icon>apps</v-icon>

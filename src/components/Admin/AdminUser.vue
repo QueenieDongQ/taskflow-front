@@ -168,9 +168,16 @@
         if (this.editedIndex > -1) {
           Object.assign(this.items[this.editedIndex], this.editedItem)
 
-          var uid=this.items[this.editedIndex].uid;
-          var item=this.items[this.editedIndex];
-          this.$http.post('/api/user/modify/'+uid, JSON.stringify(item)).then(response => {
+          let uid=this.items[this.editedIndex].uid;
+          let item=this.items[this.editedIndex];
+
+          this.$http.post('/api/user/modify/'+uid,
+            {
+              headers:{
+                'Content-type':'application/vnd.api+json',
+              },
+              body: item
+            }).then(response => {
             console.log(this.items[this.editedIndex]);
             if(response.data.code != 0) {
               this.notify(response.data.error);
