@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <script>window.$ = window.jQuery = require('jquery');</script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+
+
+<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"crossorigin="anonymous"></script>
+    <script src="server.js"></script>
+    <script src="event.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="container">
+        <h3>身份管理 User token</h3>
+        <form>
+          <div class="form-group">
+            <label for="user-file-path">user identity</label>
+            <input type="text" id="user-file-path"/>
+            <input type="file" id="user-file" style="display: none;"/>
+            <button type="button" class="btn btn-default" id="open-user-file">...</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="container">
+        <h3>本地服务设置 Local Server Settings</h3>
+        <form>
+          <div class="form-group">
+            <label for="port">local port</label>
+            <input type="text" id="port" val="3001"/>
+            <button type="button" class="btn btn-default" id="open-link">Navigate</button>
+            <button type="button" class="btn btn-default" id="open-extra">Open in browser</button>
+          </div>
+        </form>
+
+        <button type="button" class="btn btn-default" id="serve">serve</button>
+        <button type="button" class="btn btn-default" id="stop">stop</button>
+      </div>
+    </div>
+
+    <webview id="main-view" src="https://www.github.com/" style="height: 600px; width: 800px"></webview>
+  </body>
+</html>
