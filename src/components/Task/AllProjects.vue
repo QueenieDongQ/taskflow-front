@@ -599,7 +599,6 @@
 
         enterProject(id){
           // this.$router.push({name:'project',params:{id}});
-
         },
 
         addMembers(){
@@ -622,7 +621,6 @@
             // this.notify(error);
             alert(error);
           });
-
           this.addMemberShow=false;
 
         },
