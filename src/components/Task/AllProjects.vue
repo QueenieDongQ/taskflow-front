@@ -21,7 +21,7 @@
 
           <template slot="items" slot-scope="props">
             <td>
-              <span style="font-size: 17px" @click="enterTask">
+              <span style="font-size: 17px" @click="enterProject(props.item._id)">
                 <v-icon class="">folder</v-icon>{{ props.item.name }}
               </span>
               <v-chip small outline color="green" v-if="props.item.startDate">{{ props.item.startDate }}</v-chip>
@@ -185,13 +185,13 @@
                     </v-flex>
                     <v-flex xs10>
                       <v-layout row wrap>
-                        <v-flex xs2 v-for="selectedPerson in  selectedMembers" :key="selectedPerson.id">
+                        <v-flex xs2 v-for="member in  editedItem.members" :key="member.id">
                           <div class="text-xs-center">
-                            <v-chip close >
+                            <v-chip>
                               <v-avatar>
                                 <img src="selectedPerson.avater">
                               </v-avatar>
-                              {{selectedPerson.name}}
+                              {{member.name}}
                             </v-chip>
                           </div>
                         </v-flex>
@@ -207,15 +207,16 @@
                         <v-card-text>
                           <v-container fluid>
                             <v-layout row wrap>
+                              <v-flex xs12>
                               <v-select
                                 label="Select"
                                 :items="people"
-                                v-model="selectedMembers"
+                                v-model="addingMembers"
                                 item-text="name"
                                 item-value="item"
                                 multiple
                                 chips
-                                max-height="auto"
+                                max-height="300px"
                                 autocomplete
                               >
                                 <template slot="selection" slot-scope="data">
@@ -232,7 +233,7 @@
                                     {{ data.item.name }}
                                   </v-chip>
                                 </template>
-                                <template slot="item" slot-scope="data">
+                                <template slot="item" slot-scope="data" >
                                   <template v-if="typeof data.item !== 'object'">
                                     <v-list-tile-content v-text="data.item"></v-list-tile-content>
                                   </template>
@@ -246,9 +247,29 @@
                                   </template>
                                 </template>
                               </v-select>
+                              </v-flex>
+                              <v-flex xs12>
+                                <v-expansion-panel class="elevation-0" >
+                                  <v-expansion-panel-content >
+                                    <div slot="header">Advanced</div>
+                                    <v-card>
+                                      <v-list>
+                                        <v-list-tile v-for="member in editedItem.members">
+                                          <v-list-tile-avatar>
+                                            <img :src="member.avatar">
+                                          </v-list-tile-avatar>
+                                          <v-list-tile-title>{{member.name}}</v-list-tile-title>
+                                          <v-list-tile-action>
+                                            <v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>
+                                          </v-list-tile-action>
+                                        </v-list-tile>
+                                      </v-list>
+                                    </v-card>
+                                  </v-expansion-panel-content>
+                                </v-expansion-panel>
+                              </v-flex>
                             </v-layout>
                           </v-container>
-
                         </v-card-text>
                         <v-card-actions>
                           <v-btn color="primary" flat @click.stop="addMemberShow=false">Close</v-btn>
@@ -275,12 +296,12 @@
                         <v-card style="width:300px;">
                           <v-subheader>Select Labels</v-subheader>
                           <v-layout>
-                            <v-flex xs12 sm6 v-for="alllabel in alllabels" :key="alllabel.key">
+                            <v-flex xs12 sm6 v-for="alllabel in allLabels" :key="alllabel.key">
                               <v-checkbox
                                 :label="alllabel.name"
                                 v-model="selectedLabels"
                                 :color="alllabel.color"
-                                :value="alllabel"
+                                :value="alllabel.selected"
                                 hide-details
                               />
                             </v-flex>
@@ -352,15 +373,10 @@
 
     export default {
       name: "all-task-lists",
+      components:{
 
+      },
       data(){
-        let srcs = {
-          1: '',
-          2: '',
-          3: '',
-          4: '',
-          5: ''
-        }
 
         return{
           headers:[
@@ -410,34 +426,59 @@
           addMemberShow:false,
 
           labelMenu:true,
-          alllabels:[
+          allLabels:[
             {id:1,name: "Finance", color: "yellow", selected:false},
             {id:2,name: "IT" , color: "blue", selected:true},
+            {id:3,name: "Sales" , color: "red", selected:false},
           ],
           selectedLabels:[],
-          changeNameShow:false,
-          changeName:"",
+
           selectedMembers: [],
+          addingMembers:[],
           people: [
 
-            { id:0, name: 'Sandra Adams', avatar: srcs[1] },
-            { id:1, name: 'Ali Connors',  avatar: srcs[2] },
-            { id:2, name: 'Trevor Hansen', avatar: srcs[3] },
-            { id:3, name: 'Tucker Smith', avatar: srcs[2] },
-            { id:4, name: 'Britta Holt',    avatar: srcs[4] },
-            { id:5, name: 'Jane Smith ',    avatar: srcs[5] },
-            { id:6, name: 'John Smith',    avatar: srcs[1] },
-            { id:7, name: 'Sandra Williams',    avatar: srcs[3] }
+            // { id:0, name: 'Sandra Adams', avatar: '' },
+            // { id:1, name: 'Ali Connors',  avatar: '' },
+            // { id:2, name: 'Trevor Hansen', avatar: '' },
+            // { id:3, name: 'Tucker Smith', avatar: '' },
+            // { id:4, name: 'Britta Holt', avatar: '' },
+            // { id:5, name: 'Jane Smith ', avatar: '' },
+            // { id:6, name: 'John Smith', avatar: '' },
+            // { id:7, name: 'dra Williams', avatar: '' },
+            // { id:10, name: 'ndra Adams', avatar: '' },
+            // { id:11, name: 'Ai Connors',  avatar: '' },
+            // { id:12, name: 'Tevor Hansen', avatar: '' },
+            // { id:13, name: 'ucker Smith', avatar: '' },
+            // { id:14, name: 'Brta Holt', avatar: '' },
+            // { id:15, name: 'Jne Smith ', avatar: '' },
+            // { id:16, name: 'ohn Smith', avatar: '' },
+            // { id:17, name: 'Sand lliams', avatar: '' }
           ],
 
 
         }
       },
       computed:{
-
+        // selectedLabels(){
+        //   let labels = this.allLabels;
+        //   for(let i=0;i<labels.length;i++){
+        //     if(labels[i].selected == true){
+        //       this.selectedLabels.push(labels[i]);
+        //     }
+        //   }
+        //   return this.selectedLabels;
+        // }
       },
       watch: {
-
+        selectedLabels(){
+          let labels = this.allLabels;
+          for(let i=0;i<labels.length;i++){
+            if(labels[i].selected == true){
+              this.selectedLabels.push(labels[i]);
+            }
+          }
+          return this.selectedLabels;
+        }
       },
       created() {
 
@@ -484,22 +525,17 @@
         createProject(){
 
           this.project.createDate=new Date().getTime();
-          let project1 = JSON.stringify(this.project);
 
-          this.$http.post('/api/project/create', {
-            headers:{
-              'Content-type':'application/vnd.api+json',
-            },
-            body: project1
-
-          }).then(response => {
+          this.$http.post('/api/project/create', this.project).then(response => {
             if(response.data.code != 0) {
-              this.notify(response.data.error);
+              // this.notify(response.data.error);
+              alert(response.data.error);
             }
 
             this.items.push(this.project);
           }, error => {
-            this.notify(error);
+            // this.notify(error);
+            alert(error);
           });
           this.dialog=false;
         },
@@ -511,19 +547,14 @@
         },
 
         onSave() {
-          console.log(this.editedItem.uid);
-          let uid=this.editedItem.uid;
+          console.log(this.editedItem._id);
+          let pid=this.editedItem._id;
           let item = JSON.stringify(this.editedItem);
 
           if (this.editedIndex > -1) {
             Object.assign(this.items[this.editedIndex], this.editedItem);
 
-            this.$http.post('/api/project/'+uid+'/update', {
-              headers: {
-                'Content-type': 'application/vnd.api+json',
-              },
-              body: item
-            }).then(response => {
+            this.$http.post('/api/project/'+pid+'/update', JSON.stringify(item)).then(response => {
               if(response.data.code != 0) {
                 this.notify(response.data.error);
               }else{
@@ -546,16 +577,11 @@
         deleteProject(item){
           console.log(item);
           const index = this.items.indexOf(item);
-          const uid =item.uid;
+          const pid =item._id;
           let r= confirm('Are you sure you want to delete this project?') ;
 
           if(r === true){
-            this.$http.post('/api/project/'+uid+'/delete', {
-              headers: {
-                'Content-type': 'application/vnd.api+json',
-              },
-              body: item
-            }).then(response => {
+            this.$http.post('/api/project/'+pid+'/delete',JSON.stringify(item)).then(response => {
               if(response.data.code != 0) {
                 this.notify(response.data.error);
               }else{
@@ -571,34 +597,57 @@
           }
         },
 
-        enterTask(){
-          console.log(this)
+        enterProject(id){
+          // this.$router.push({name:'project',params:{id}});
 
         },
 
         addMembers(){
-          let uid=this.editedItem.uid;
-          let selectM
-          this.$http.post('/api/project/'+uid+'/member/add', {
-            headers: {
-              'Content-type': 'application/vnd.api+json',
-            },
-            body: project1
-          }).then(response => {
+          let pid = this.editedItem._id;
+          let members = this.addingMembers;
+          console.log(members);
+          let id=[];
+          for(let i=0;i<members.length;i++){
+            id[i]=members._id;
+          }
+
+          this.$http.post('/api/project/'+pid+'/member/add',id).then(response => {
+            if(response.data.code != 0) {
+              // this.notify(response.data.error);
+              alert(response.data.error);
+            }
+            console.log(response);
+            // this.editedItem.members
+          }, error => {
+            // this.notify(error);
+            alert(error);
+          });
+
+          this.addMemberShow=false;
+
+        },
+
+        deleteMember(item){
+          console.log(item);
+
+          let pid=this.editedItem._id;
+          let mid=item._id;
+          this.$http.post('/api/project/'+pid+'/member/delete', mid).then(response => {
             if(response.data.code != 0) {
               this.notify(response.data.error);
+            }else{
+              alert('Delete successfully!');
+              // this.items.splice(index, 1);
+              this.addMemberShow = false;
             }
-
-            this.items.push(this.project);
           }, error => {
-            this.notify(error);
+            this.notify(error)
           });
-          this.dialog=false;
 
         },
 
         changeLabelName(){
-          this.changeNameShow=true;
+
         },
 
         remove (item) {
