@@ -1,8 +1,8 @@
 <template lang="html">
   <v-layout column>
     <singlecard v-if="isShow"
-                @close="isShow = false"
-                :isShow="isShow"></singlecard>
+                @close.stop="isShow = false"
+                :isShow = "isShow"></singlecard>
     <v-flex xs12>
       <vddl-draggable class="panel__body--item"
                       :draggable="item"
@@ -19,7 +19,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn icon
-                   @click="isShow = true"
+                   @click="isShow == true"
                    ><v-icon>edit</v-icon></v-btn>
           </v-card-actions>
         </v-card>

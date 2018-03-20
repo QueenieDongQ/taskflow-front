@@ -1,6 +1,5 @@
 <template lang="html">
-<!--<div>-->
-  <!--<v-layout row class="cardDialog">-->
+<div>
     <v-dialog
       v-model="dialogShow"
       transition="dialog-bottom-transition"
@@ -106,8 +105,8 @@
 
       </v-card>
     </v-dialog>
-  <!--</v-layout>-->
-<!--</div>-->
+  </v-layout>
+</div>
 </template>
 <script>
   import Layout from "../../views/layout/components/Layout";
@@ -145,8 +144,7 @@
             startDate:"2018-02-02",
             dueDate:"2018-02-03",
             description:"text1",
-          }
-        ,
+          },
         treeData:[
           {
             id:"clist1",

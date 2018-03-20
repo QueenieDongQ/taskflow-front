@@ -1,23 +1,6 @@
 <template lang="html">
   <ul>
-    <!--<li>-->
-      <!--<div-->
-        <!--:class="{bold: isFolder}"-->
-        <!--@click="toggle"-->
-        <!--@dblclick="changeType">-->
-        <!--{{ treeList.name }}-->
-        <!--<span v-if="isFolder">[{{ open ? '-' : '+' }}]</span>-->
-      <!--</div>-->
-      <!--<ul v-show="open">-->
-        <!--<li v-for="(model, index) in treeList"-->
-          <!--class="item"-->
-          <!--:key="index">-->
-        <!--<span><input class="checkbox" type="checkbox">{{model.name}} - {{key}}</span>-->
-        <!--</li>-->
-        <!--<li class="add" @click="addChild">+</li>-->
-      <!--</ul>-->
-    <!--</li>-->
-    <!--<li class="add" @click="addChild">+</li>-->
+    <li>
 
     <li v-for="(tree, index) in treeList">
       <div

@@ -1,8 +1,8 @@
 <template lang="html">
   <v-container fluid>
-    <v-layout>
+    <v-layout row>
 
-      <v-flex sm4 v-for="(list, zone) in dropzones" >
+      <v-flex sm4 v-for="(list, zone) in dropzones" :key="list">
 
         <div class="panel">
           <div class="panel__heading">
@@ -30,65 +30,65 @@
         </div>
       </v-flex>
     </v-layout>
-    <!--<div>-->
-      <!--<div class="col-md-12">-->
-        <!--<div class="new-elements">-->
-          <!--<div class="panel panel&#45;&#45;info">-->
-            <!--<div class="panel__heading">-->
-              <!--<h3>New Elements</h3>-->
-            <!--</div>-->
-            <!--<div class="panel__body">-->
-              <!--<vddl-draggable class="button"-->
-                              <!--:draggable="itemMock"-->
-                              <!--:copied="copied"-->
-                              <!--effect-allowed="copy">-->
-                <!--Add Item-->
-              <!--</vddl-draggable>-->
-              <!--<br>-->
-              <!--<vddl-draggable class="button"-->
-                              <!--:draggable="containerMock"-->
-                              <!--:copied="copied"-->
-                              <!--effect-allowed="copy">-->
-                <!--Add Container-->
-              <!--</vddl-draggable>-->
-            <!--</div>-->
-          <!--</div>-->
-        <!--</div>-->
-        <!--<div class="new-elements disable-element">-->
-          <!--<div class="panel panel&#45;&#45;info">-->
-            <!--<div class="panel__heading">-->
-              <!--<h3>Toggle Disable</h3>-->
-            <!--</div>-->
-            <!--<div class="panel__body">-->
-              <!--<div class="button" @click="toggleDisable">-->
-                <!--Disable: {{disable}}-->
-              <!--</div>-->
-            <!--</div>-->
-          <!--</div>-->
-        <!--</div>-->
-        <!--<div class="selected-item" v-if="selectedItem">-->
-          <!--<div class="panel panel&#45;&#45;info">-->
-            <!--<div class="panel__heading">-->
-              <!--<h3>Selected</h3>-->
-            <!--</div>-->
-            <!--<div class="panel__body">-->
-              <!--{{selectedItem.type}} {{selectedItem.id}}-->
-            <!--</div>-->
-          <!--</div>-->
-        <!--</div>-->
-        <!--<div class="ashcan">-->
-          <!--<div class="panel panel&#45;&#45;info">-->
-            <!--<div class="panel__heading">-->
-              <!--<h3>Ashcan</h3>-->
-            <!--</div>-->
-            <!--<vddl-list :list="[]" class="panel__body">-->
+    <div>
+      <div class="col-md-12">
+        <div class="new-elements">
+          <div class="panel panel--info">
+            <div class="panel__heading">
+              <h3>New Elements</h3>
+            </div>
+            <div class="panel__body">
+              <vddl-draggable class="button"
+                              :draggable="itemMock"
+                              :copied="copied"
+                              effect-allowed="copy">
+                Add Item
+              </vddl-draggable>
+              <br>
+              <vddl-draggable class="button"
+                              :draggable="containerMock"
+                              :copied="copied"
+                              effect-allowed="copy">
+                Add Container
+              </vddl-draggable>
+            </div>
+          </div>
+        </div>
+        <div class="new-elements disable-element">
+          <div class="panel panel--info">
+            <div class="panel__heading">
+              <h3>Toggle Disable</h3>
+            </div>
+            <div class="panel__body">
+              <div class="button" @click="toggleDisable">
+                Disable: {{disable}}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="selected-item" v-if="selectedItem">
+          <div class="panel panel--info">
+            <div class="panel__heading">
+              <h3>Selected</h3>
+            </div>
+            <div class="panel__body">
+              {{selectedItem.type}} {{selectedItem.id}}
+            </div>
+          </div>
+        </div>
+        <div class="ashcan">
+          <div class="panel panel--info">
+            <div class="panel__heading">
+              <h3>Ashcan</h3>
+            </div>
+            <vddl-list :list="[]" class="panel__body">
 
-            <!--</vddl-list>-->
-          <!--</div>-->
-        <!--</div>-->
-      <!--</div>-->
+            </vddl-list>
+          </div>
+        </div>
+      </div>
 
-    <!--</div>-->
+    </div>
   </v-container>
 
 </template>

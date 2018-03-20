@@ -21,14 +21,16 @@
 
           <template slot="items" slot-scope="props">
             <td>
-              <span style="font-size: 17px" @click="enterProject(props.item._id)">
+              <span style="font-size: 17px" >
+                <router-link :to="`/projects/${props.item._id}`">
                 <v-icon class="">folder</v-icon>{{ props.item.name }}
+                  </router-link>
               </span>
               <v-chip small outline color="green" v-if="props.item.startDate">{{ props.item.startDate }}</v-chip>
               <v-chip small outline color="red" v-if="props.item.dueDate" >{{ props.item.dueDate }}</v-chip>
             </td>
-            <td class="text-xs-right">{{ props.item.owner }}</td>
-            <td class="text-xs-right">{{ props.item.createDate }}</td>
+            <td class="text-xs-right">{{ props.item.ownerName }}</td>
+            <td class="text-xs-right">{{ props.item.localDate }}</td>
 
             <td class="justify-center layout px-0">
               <v-btn icon ripple @click="editItem(props.item)">
@@ -54,20 +56,20 @@
 
               <v-container grid-list-md>
                 <v-layout row wrap>
-                  <v-flex xs12 sm6 md4>
+                  <v-flex xs12 md6>
                     <v-text-field label="Project Name" v-model="project.name" required/>
                   </v-flex>
-                  <v-flex xs12 sm6 md4>
+                  <v-flex xs12 md6>
                     <v-text-field label="Project Code" v-model="project.code" required/>
                   </v-flex>
-                  <v-flex xs12 md4>
+                  <v-flex xs12 md12>
                     <v-text-field
                       label="Client"
                       v-model="project.client"
                       persistent-hint
                       required/>
                   </v-flex>
-                  <v-flex xs12>
+                  <v-flex xs12 md12>
                     <v-text-field label="Part Number" v-model="project.partNumber" multi-line required/>
                   </v-flex>
 
@@ -166,7 +168,6 @@
                           <v-btn icon slot="activator" >
                             <i class="material-icons">access_time</i>
                           </v-btn>
-
                           <v-date-picker v-model="editedItem.dueDate" no-title scrollable/>
                         </v-menu>
                       </v-subheader>
@@ -185,11 +186,11 @@
                     </v-flex>
                     <v-flex xs10>
                       <v-layout row wrap>
-                        <v-flex xs2 v-for="member in  editedItem.members" :key="member.id">
+                        <v-flex xs2 v-for="member in  editedItem.members" :key="member._id">
                           <div class="text-xs-center">
                             <v-chip>
                               <v-avatar>
-                                <img src="selectedPerson.avater">
+                                <img :src="member.avater">
                               </v-avatar>
                               {{member.name}}
                             </v-chip>
@@ -197,7 +198,6 @@
                         </v-flex>
                         <v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow"> <i class="material-icons">group_add</i></v-btn>
                       </v-layout>
-
                     </v-flex>
                     <v-dialog v-model="addMemberShow" max-width="500px" height="400px">
                       <v-card>
@@ -208,24 +208,23 @@
                           <v-container fluid>
                             <v-layout row wrap>
                               <v-flex xs12>
-                              <v-select
-                                label="Select"
-                                :items="people"
-                                v-model="addingMembers"
-                                item-text="name"
-                                item-value="item"
-                                multiple
-                                chips
-                                max-height="300px"
-                                autocomplete
-                              >
+                                <v-select
+                                  label="Select"
+                                  :items="people"
+                                  v-model="addingMembers"
+                                  item-text="name"
+                                  multiple
+                                  chips
+                                  max-height="300px"
+                                  autocomplete>
+
                                 <template slot="selection" slot-scope="data">
                                   <v-chip
                                     close
                                     @input="data.parent.selectItem(data.item)"
                                     :selected="data.selected"
                                     class="chip--select-multi"
-                                    :key="JSON.stringify(data.item.id)"
+                                    :key="JSON.stringify(data.item._id)"
                                   >
                                     <v-avatar>
                                       <img :src="data.item.avatar">
@@ -247,6 +246,7 @@
                                   </template>
                                 </template>
                               </v-select>
+
                               </v-flex>
                               <v-flex xs12>
                                 <v-expansion-panel class="elevation-0" >
@@ -254,10 +254,11 @@
                                     <div slot="header">Advanced</div>
                                     <v-card>
                                       <v-list>
-                                        <v-list-tile v-for="member in editedItem.members">
+                                        <v-list-tile v-for="member in editedItem.members" :key="member._id">
                                           <v-list-tile-avatar>
                                             <img :src="member.avatar">
                                           </v-list-tile-avatar>
+
                                           <v-list-tile-title>{{member.name}}</v-list-tile-title>
                                           <v-list-tile-action>
                                             <v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>
@@ -276,8 +277,6 @@
                           <v-spacer/>
                           <v-btn color="primary" flat @click="addMembers">Send</v-btn>
                         </v-card-actions>
-
-
                       </v-card>
                     </v-dialog>
 
@@ -285,31 +284,35 @@
                       <v-subheader>Labels</v-subheader>
                     </v-flex>
                     <v-flex xs10>
-                      <v-layout>
+                      <v-layout row wrap>
+                        <v-flex xs2 text-xs-center v-for="label in selectedLabels" :key="label.id" v-if="label.selected =true">
 
-                      <v-flex xs2 text-xs-center v-for="slabel in selectedLabels" :key="slabel.id">
-                          <v-chip close :color="slabel.color" @input="remove(slabel)">{{slabel.name}}</v-chip>
-                      </v-flex>
+                            <v-chip :color="label.color"
+                                          @input="label.selected =false">{{label.name}}</v-chip>
+                        </v-flex>
 
-                      <v-menu offset-y :close-on-content-click="false" >
-                        <v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>
-                        <v-card style="width:300px;">
-                          <v-subheader>Select Labels</v-subheader>
-                          <v-layout>
-                            <v-flex xs12 sm6 v-for="alllabel in allLabels" :key="alllabel.key">
-                              <v-checkbox
-                                :label="alllabel.name"
-                                v-model="selectedLabels"
-                                :color="alllabel.color"
-                                :value="alllabel.selected"
-                                hide-details
-                              />
-                            </v-flex>
+                        <v-menu offset-y :close-on-content-click="false" >
+                          <v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>
+                          <v-card style="width:300px;">
+                            <v-subheader>Select Labels</v-subheader>
 
-                          </v-layout>
+                              <v-flex xs12 v-for="(label,index) in allLabels" :key="index">
+                                <v-checkbox
+                                  :label="label.name"
+                                  v-model="selectedLabels"
+                                  :color="label.color"
+                                  :checked="label.selected"
+                                  @click.native="label.selected = !label.selected"
+                                  :value="label"
+                                  hide-details
+                                />
 
-                        </v-card>
-                      </v-menu>
+                              </v-flex>
+                              <v-flex xs12>
+                                <v-btn icon>add</v-btn>
+                              </v-flex>
+                          </v-card>
+                        </v-menu>
                       </v-layout>
                     </v-flex>
                   </v-layout>
@@ -320,12 +323,23 @@
 
 
               <v-layout row wrap>
-                <v-flex xs5>
+                <v-flex xs6>
                   <v-text-field  label="Project Code" v-model="editedItem.code" :disabled="disable"/>
                 </v-flex>
-                <v-spacer/>
-                <v-flex xs5>
+
+                <v-flex xs6>
                   <v-text-field  label="Client" v-model="editedItem.client" :disabled="disable"/>
+                </v-flex>
+                <v-flex xs12>
+
+                  <v-text-field
+                    name="partNumber"
+                    label="Part Number"
+                    v-model="editedItem.partNumber"
+                    multi-line
+                    :disabled="disable"
+                  />
+                  <v-divider class="divide"/>
                 </v-flex>
 
                 <v-flex xs12>
@@ -411,9 +425,7 @@
 
           ],
           search:'',
-          items: [
-
-          ],
+          items: [],
           dialog: false,
           project:{},
           editedShow:false,
@@ -424,62 +436,26 @@
           progress_value:0,
           disable:false,
           addMemberShow:false,
-
-          labelMenu:true,
-          allLabels:[
-            {id:1,name: "Finance", color: "yellow", selected:false},
-            {id:2,name: "IT" , color: "blue", selected:true},
-            {id:3,name: "Sales" , color: "red", selected:false},
-          ],
-          selectedLabels:[],
-
           selectedMembers: [],
           addingMembers:[],
-          people: [
+          people: [],
+          labelMenu:true,
+          allLabels:[],
+          selectedLabels:[],
 
-            // { id:0, name: 'Sandra Adams', avatar: '' },
-            // { id:1, name: 'Ali Connors',  avatar: '' },
-            // { id:2, name: 'Trevor Hansen', avatar: '' },
-            // { id:3, name: 'Tucker Smith', avatar: '' },
-            // { id:4, name: 'Britta Holt', avatar: '' },
-            // { id:5, name: 'Jane Smith ', avatar: '' },
-            // { id:6, name: 'John Smith', avatar: '' },
-            // { id:7, name: 'dra Williams', avatar: '' },
-            // { id:10, name: 'ndra Adams', avatar: '' },
-            // { id:11, name: 'Ai Connors',  avatar: '' },
-            // { id:12, name: 'Tevor Hansen', avatar: '' },
-            // { id:13, name: 'ucker Smith', avatar: '' },
-            // { id:14, name: 'Brta Holt', avatar: '' },
-            // { id:15, name: 'Jne Smith ', avatar: '' },
-            // { id:16, name: 'ohn Smith', avatar: '' },
-            // { id:17, name: 'Sand lliams', avatar: '' }
-          ],
+
 
 
         }
       },
-      computed:{
-        // selectedLabels(){
-        //   let labels = this.allLabels;
-        //   for(let i=0;i<labels.length;i++){
-        //     if(labels[i].selected == true){
-        //       this.selectedLabels.push(labels[i]);
-        //     }
-        //   }
-        //   return this.selectedLabels;
-        // }
+      computed: {
+
       },
+
       watch: {
-        selectedLabels(){
-          let labels = this.allLabels;
-          for(let i=0;i<labels.length;i++){
-            if(labels[i].selected == true){
-              this.selectedLabels.push(labels[i]);
-            }
-          }
-          return this.selectedLabels;
-        }
+
       },
+
       created() {
 
         this.fetchData();
@@ -487,55 +463,140 @@
       },
 
       methods:{
-        fetchData() {
-
-          let proAPI='/api/project/involved';
-          let usrAPI='/api/user/all';
-
-          this.$http.get('/api/project/involved').then(response => {
+        getData(url,callback = undefined){
+          this.$http.get(url).then(response => {
             // get body data
-            this.items = response.data.data;
-            console.log(this.items);
+            if(response.data.code != 0) {
+              // this.notify(response.data.error);
+              alert(response.data.error);
+              return;
+            }
+            let data = response.data.data;
+            if(callback) {
+              callback(data);
+            }
 
           }, error=> {
             // error callback
             this.notify(error)
           });
+        },
 
-          this.$http.get('/api/user/all').then(response => {
-            // get body data
-            this.people = response.data.data;
-            console.log(this.people);
+        postData(url,data,callback = undefined){
+          this.$http.post(url, data).then(response => {
+            if(response.data.code != 0) {
+              // this.notify(response.data.error);
+              alert(response.data.error);
+              return;
+            }
+            let data = response.data.data;
+            if(callback) {
+              callback(data);
+            }
+          }, error => {
+            // this.notify(error);
+            alert(error);
+          });
+        },
 
-          }, error=> {
-            // error callback
-            this.notify(error)
+        fetchData(callback = undefined) {
+          let urlUser = "/api/user/all";
+          this.getData(urlUser,(data)=>{
+            //get people data
+            this.people = data;
+
+            //get projects data
+            let urlProject = "/api/project/involved";
+            this.getData(urlProject,(data)=>{
+              let items = data;
+
+              for(let i = 0 ;i<items.length;i++) {
+                //transfer time stick to local time
+                let localDate = this.convertLocalTime(items[i].createDate);
+                items[i].localDate = localDate;
+
+                //transfer owner to ownerName
+                let id = items[i].owner;
+                let name = this.searchMemberInfo(id, "name");
+                items[i].ownerName = name;
+                let members = items[i].members;
+                for (let j = 0; j < members.length; j++) {
+                  let memberID = members[j];
+                  let memberName = this.searchMemberInfo(memberID, "name");
+                  let avater = this.searchMemberInfo(memberID, "avater");
+                  members[j] = {"_id": memberID, "name": memberName, "avater": avater};
+                }
+                items[i].members = members;
+
+              }
+              this.items = items;
+              console.log(this.items);
+
+              let d = this.items;
+              if(callback) {
+                callback(d);
+              }
+            });
           });
 
+        },
+        convertLocalTime(time){
+          let date = new Date(time);
+          let year = date.getFullYear(); // 获取完整的年份(4位,1970)
+          let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
+          let day = date.getDate(); // 获取日(1-31)
+          // date.getTime(); // 获取时间(从1970.1.1开始的毫秒数)
+          // date.getHours(); // 获取小时数(0-23)
+          // date.getMinutes(); // 获取分钟数(0-59)
+          // date.getSeconds(); // 获取秒数(0-59)
+
+          return year+"."+month+"."+day;
+        },
+
+        searchMemberInfo(id,target){
+          let that = this;
+          let people = that.people;
+
+          for(let i=0;i<people.length;i++){
+            if(id == people[i]._id){
+              if(target == "name"){
+                  return people[i].name;
+              }
+              else if(target == "avater"){
+                  return  people[i].avater;
+              }
+            }
+          }
         },
 
         editItem (item) {
           this.editedIndex = this.items.indexOf(item);
           this.editedItem = Object.assign({}, item);
           this.editedShow = true;
-          console.log(this.editedItem);
 
+          this.allLabels = this.editedItem.labels;
+          let labels = this.allLabels;
+          console.log(labels);
+          let j=0;
+          for(let i=0;i<labels.length;i++){
+
+            if(labels[i].selected == true){
+              this.selectedLabels[j]=labels[i];
+              j++;
+            }
+          }
+          console.log(this.editedItem);
         },
 
         createProject(){
-
+          // let that = this;
           this.project.createDate=new Date().getTime();
+          console.log(this.project);
+          // this.project.labels =
 
-          this.$http.post('/api/project/create', this.project).then(response => {
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-            }
-
-            this.items.push(this.project);
-          }, error => {
-            // this.notify(error);
-            alert(error);
+          let urlCreate = "/api/project/create";
+          this.postData(urlCreate,this.project,()=>{
+            this.fetchData();
           });
           this.dialog=false;
         },
@@ -547,101 +608,82 @@
         },
 
         onSave() {
-          console.log(this.editedItem._id);
-          let pid=this.editedItem._id;
-          let item = JSON.stringify(this.editedItem);
 
-          if (this.editedIndex > -1) {
-            Object.assign(this.items[this.editedIndex], this.editedItem);
+          let that =this;
+          let pid=that.editedItem._id;
+          let item = that.editedItem;
+          delete item._id;
+          delete item.members;
+          item.labels = this.allLabels;
+          console.log(item);
 
-            this.$http.post('/api/project/'+pid+'/update', JSON.stringify(item)).then(response => {
-              if(response.data.code != 0) {
-                this.notify(response.data.error);
-              }else{
-                alert('Save successfully!');
-                // this.$options.methods.updateItem(item);
-              }
-            }, error => {
-              this.notify(error)
+          if (that.editedIndex > -1) {
+            Object.assign(that.items[that.editedIndex], item);
+
+            let urlUpdate = "/api/project/"+pid+"/update";
+            this.postData(urlUpdate,item,()=>{
+              alert("Save successfully!");
+              this.fetchData();
             });
-
-          } else {
-
-            this.items.push(this.editedItem);
-
           }
-          this.editedShow=false;
+          that.editedShow=false;
 
         },
 
         deleteProject(item){
           console.log(item);
-          const index = this.items.indexOf(item);
           const pid =item._id;
-          let r= confirm('Are you sure you want to delete this project?') ;
+          let r = confirm('Are you sure you want to delete this project?') ;
 
-          if(r === true){
-            this.$http.post('/api/project/'+pid+'/delete',JSON.stringify(item)).then(response => {
-              if(response.data.code != 0) {
-                this.notify(response.data.error);
-              }else{
-                alert('Delete successfully!');
-                // this.items.splice(index, 1);
-                this.editedShow = false;
-              }
-            }, error => {
-              this.notify(error)
+          if(r === true) {
+            let urlDelete = '/api/project/' + pid + '/delete';
+            this.postData(urlDelete, item, () => {
+              alert('Delete successfully!');
+              this.fetchData();
+              this.editedShow = false;
             });
-          }else{
-            return;
           }
-        },
-
-        enterProject(id){
-          // this.$router.push({name:'project',params:{id}});
         },
 
         addMembers(){
-          let pid = this.editedItem._id;
-          let members = this.addingMembers;
-          console.log(members);
+          let that =this;
+          let pid = that.editedItem._id;
+          let members = that.addingMembers;
+          console.log(that.editedIndex);
           let id=[];
           for(let i=0;i<members.length;i++){
-            id[i]=members._id;
+            id[i]=members[i]._id;
           }
+          // console.log(id);
+          // console.log(that.editedItem);
 
-          this.$http.post('/api/project/'+pid+'/member/add',id).then(response => {
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-            }
-            console.log(response);
-            // this.editedItem.members
-          }, error => {
-            // this.notify(error);
-            alert(error);
+          let urlAdd = "/api/project/"+pid+"/member/add";
+          this.postData(urlAdd,id,()=> {
+            this.fetchData( (d)=>{
+              let items = d;
+              this.items = items;
+              this.editedItem.members=this.items[that.editedIndex].members;
+            });
           });
+          // console.log(this.items);
           this.addMemberShow=false;
-
         },
 
         deleteMember(item){
           console.log(item);
-
-          let pid=this.editedItem._id;
-          let mid=item._id;
-          this.$http.post('/api/project/'+pid+'/member/delete', mid).then(response => {
-            if(response.data.code != 0) {
-              this.notify(response.data.error);
-            }else{
-              alert('Delete successfully!');
-              // this.items.splice(index, 1);
-              this.addMemberShow = false;
-            }
-          }, error => {
-            this.notify(error)
+          let that = this;
+          let pid=that.editedItem._id;
+          let memberID=[item._id];
+          console.log(memberID);
+          let urlDelete = "/api/project/"+pid+"/member/delete";
+          this.postData(urlDelete,memberID,()=>{
+            this.fetchData((d)=>{
+              let items = d;
+              this.items = items;
+              this.editedItem.members=this.items[that.editedIndex].members;
+            });
+            // that.addMemberShow = false;
           });
-
         },
 
         changeLabelName(){
@@ -649,8 +691,13 @@
         },
 
         remove (item) {
-          this.selectedLabels.splice(this.selectedLabels.indexOf(item), 1)
-          this.selectedLabels = [...this.selectedLabels]
+
+          let that = this;
+          let labels = that.allLabels;
+          let index = labels.indexOf(item);
+          labels[index].selected = false;
+          console.log(labels);
+          // this.allLabels = labels;
         }
       }
 

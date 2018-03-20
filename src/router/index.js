@@ -5,7 +5,7 @@ import Userinfo from '@/components/User/Userinfo'
 import Board from '@/components/Kanban/Board'
 import AdminUser from '@/components/Admin/AdminUser'
 
-import LeafDetails from '@/components/Task/LeafDetails'
+import myTask from '@/components/Task/myTask'
 import AllProjects from '@/components/Task/AllProjects'
 import TreeList from '@/components/Task/TreeList'
 Vue.use(Router)
@@ -30,21 +30,22 @@ export default new Router({
     },
 
     {
-      path: '/LeafDetails',
-      name: 'LeafDetails',
-      component: LeafDetails
+      path: '/projects',
+      name: 'projects',
+      component: AllProjects,
+      // children:[
+      //   {
+      //     path:'projects/:id',
+      //     name:'myTask',
+      //     component:myTask,
+      //     props: { assets:" "}
+      //   }
+      // ]
     },
     {
-      path: '/AllProjects',
-      name: 'AllProjects',
-      component: AllProjects,
-      children:[
-        {
-          path:'/:uid',
-          name:'singleProject'
-
-        }
-      ]
+      path:'/projects/:id',
+      name:'myTask',
+      component:myTask,
     },
     {
       path: '/TreeList',

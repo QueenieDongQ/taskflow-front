@@ -1,14 +1,13 @@
 let server;
 let shell = require('electron').shell;
-let app = get_express_server();
 
 function serve(path) {
     if(server) {
         server.close()
     }
     try {
-        let certs = require(path);
-        set_api_server(app, certs);
+      let certs = require(path);
+      let app = get_express_server(certs, "localhost", 8443);
         let port = $("#port").val();
         port = parseInt(port);
         server = app.listen(port)
@@ -59,7 +58,7 @@ $(document).ready(()=>{
         }
         let port = $("#port").val();
         // window.open("http://localhost:"+port+'/api/user/info')
-        mainView2("http://localhost:"+port+'/api/user/info')
+        mainView2("http://localhost:"+port+'/')
     });
     $("#open-extra").click(() => {
         if(!server) {
