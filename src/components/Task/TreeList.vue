@@ -5,31 +5,13 @@
   import tree from './Tree'
   export default{
     name:"tree-list",
+    props:['data'],
     components:{
       tree
     },
     data(){
       return {
-        data: {
-          name: 'Root',
-          id: 0,
-          children: [
-            {
-              name: 'Node 1-1',
-              id: 1,
-              children: [
-                {
-                  name: 'Node 2-1',
-                  id: 2
-                }
-              ]
-            },
-            {
-              name: 'Node 1-2',
-              id: 3
-            }
-          ]
-        }
+
       }
     },
     methods: {

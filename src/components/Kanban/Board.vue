@@ -37,6 +37,7 @@
     padding: 10px;
     background-color: #EEEEEE;
     float:left;
+    /*overflow: hidden;*/
   }
   .box-title{
     text-indent: 24px;

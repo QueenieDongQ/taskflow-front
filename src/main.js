@@ -5,10 +5,9 @@ import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css' // Ensure you are using css-loader
 import App from './App'
 import router from './router'
-import Vddl from 'vddl';
+
 import VueResource from 'vue-resource';
 
-Vue.use(Vddl);
 
 Vue.use(Vuetify)
 Vue.use(VueResource)
