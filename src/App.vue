@@ -152,5 +152,7 @@
 </script>
 
 <style scoped>
-
+  *{
+    vertical-align: middle;
+  }
 </style>

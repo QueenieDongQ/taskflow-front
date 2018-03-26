@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <div style="position:fixed;bottom:5%;right:0px;z-index:10">
+    <div style="position:fixed; bottom:5%; right:0; z-index:10">
       <v-btn
         absolute
         dark
@@ -8,16 +8,47 @@
         top
         right
         color="pink"
-        @click="addTask()"
+        slot="activator"
+        @click="addTask"
       >
         <v-icon>add</v-icon>
       </v-btn>
     </div>
+
+    <v-dialog v-model="newTaskShow" max-width="500px">
+      <v-card style="margin: 0">
+        <v-card-title>
+          <span class="headline">Add New Task</span>
+        </v-card-title>
+        <v-card-text>
+          <v-container grid-list-md>
+            <v-layout wrap>
+              <v-flex xs12>
+                <v-text-field label="Task Name" v-model="newTask.name" required></v-text-field>
+              </v-flex>
+            </v-layout>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-layout row text-center>
+            <v-flex xs6>
+              <v-btn color="primary" flat @click.stop="newTaskShow=false">Close</v-btn>
+            </v-flex>
+            <v-flex xs6>
+              <v-btn color="primary" flat @click.stop="createTask">Save</v-btn>
+            </v-flex>
+          </v-layout>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+
+
     <v-layout row>
       <v-flex xs2>
         <!--<vue-drag-tree v-model="lists" ></vue-drag-tree>-->
         <ul>
-          <tree :dataList="lists"></tree>
+          <!--<tree :dataList="lists"></tree>-->
         </ul>
       </v-flex>
       <v-flex xs10>
@@ -37,26 +68,22 @@
             <v-divider></v-divider>
             <v-flex xs12>
               <v-layout row wrap>
-
                 <v-flex xs4 v-for="(list, index) in filterLists" :key="index">
                   <board :key="index"
-                         @dragChange="dragChange" :title="list.status" :index="index">
+                         @dragChange="dragChange" :title="list.name" :index="index">
                     <card v-for="(innerItem, innerIndex) in list.items"
                           :key="index + '-' + innerIndex"
                           :data="innerItem"
                           :innerIndex="innerIndex"
                           :index="index"
+                          :innerStatus="innerItem.status"
                           @listenEditItem="showEditDialog"
                           @listenEditClose="closeEditDialog"></card>
                   </board>
                 </v-flex>
-
               </v-layout>
             </v-flex>
-
-
           </v-layout>
-          <!--<singlecard :isShow="editedShow" :data="editedItem"></singlecard>-->
         </v-container>
       </v-flex>
     </v-layout>
@@ -288,43 +315,52 @@
               </v-flex>
             </v-layout>
 
-
-
             <v-divider class="divide"/>
 
 
             <v-layout row wrap>
-
               <v-flex xs12>
-
-                <v-text-field
-                  name="description"
-                  label="Description"
-                  v-model="editedItem.description"
-                  multi-line
-                  :disabled="disable"
-                />
-                <v-divider class="divide"/>
+                <v-subheader>Description</v-subheader>
+                <v-container>
+                  <v-layout row>
+                    <v-flex xs12>
+                      <v-text-field
+                        name="description"
+                        v-model="editedItem.description"
+                        multi-line
+                        textarea
+                        :disabled="disable"
+                      />
+                    </v-flex>
+                  </v-layout>
+                </v-container>
               </v-flex>
+            </v-layout>
+            <v-divider class="divide"/>
+
+            <v-layout row>
               <v-flex xs12>
                 <v-subheader>Checklist</v-subheader>
-                <v-divider class="divide"/>
-
-                <v-subheader>Comments History</v-subheader>
-                <v-divider class="divide"/>
               </v-flex>
+              <v-flex xs12>
 
+              </v-flex>
             </v-layout>
+            <v-divider class="divide"/>
+
+            <v-layout row>
+                <v-subheader>Comments History</v-subheader>
+            </v-layout>
+
+
           </v-container>
         </v-card-text>
+        <!--<v-footer height="auto">-->
 
-        <v-footer>
-          <v-layout row>
-            <v-spacer/>
-            <v-flex xs9><v-text-field style="" label="Comment"/></v-flex>
-            <v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>
-          </v-layout>
-        </v-footer>
+          <!--<v-text-field style="" label="Comment"/>-->
+          <!--<v-btn icon><i class="material-icons">send</i></v-btn>-->
+
+        <!--</v-footer>-->
       </v-card>
 
     </v-dialog>
@@ -343,6 +379,7 @@
   export default {
 
     name: "my-task",
+    props: ['projectId'],
     components:{
         'board':Board,
         'card':Card,
@@ -352,56 +389,16 @@
       data(){
         return{
           search:"",
-          lists:[
-            {
-              "status":"To Do",
-              "items":[
-                {
-                  "name":"test",
-                  "id":"l1",
-                  // "desc":None,
-                  // "reference_id":"",
-
-                },
-                {
-                  "name":"urtut",
-                  "id":"l2",
-                  // "desc":None,
-                  // "reference_id":""
-
-                }
-              ]
-            },
-            {
-              "status":"In Progress",
-              "items":[
-                {
-                  "name":"errrst",
-                  "id":"l3",
-                  "desc":"",
-                  "reference_id":""
-
-                },
-                {
-                  "name":"ytgdf",
-
-                }
-              ]
-            },
-            {
-              "status":"Done",
-              "items":[
-                {
-                  "name":"wesdst",
-
-                },
-                {
-                  "name":"tuethfgdf",
-
-                }
-              ]
-            },
+          newTaskShow:false,
+          newTask:{},
+          dialog2:false,
+          statuses:[
+            { "name": "TO DO", "status":"todo", "items":[]},
+            { "name": "In Progress" ,"status":"progress", "items":[]},
+            { "name": "Done","status":"done", "items":[] },
           ],
+          lists:[],
+
           editedInfo:[],
           editedItem:{},
           editedShow:false,
@@ -433,13 +430,38 @@
       },
 
       created(){
-
+        this.fetchData();
       },
 
       computed:{
-        filterLists(){
+        kanbanlist(){
           let lists = this.lists;
-          console.log(lists);
+          // console.log(lists);
+          let statuses = this.statuses;
+          for(let i=0;i<lists.length;i++){
+            let status = lists[i].status;
+
+             let result = statuses.find((v) => {
+               return v.status == status;
+             });
+
+            let index = statuses.indexOf(result);
+            // console.log(index);
+            statuses[index].items.push(lists[i]);
+            // console.log(statuses);
+
+          }
+          // console.log(statuses);
+          return statuses;
+        },
+
+        treelist(){
+
+        },
+
+        filterLists(){
+          let lists = this.kanbanlist;
+          // console.log(lists);
           let search = this.search;
           if( !search ){
             return lists
@@ -464,10 +486,68 @@
       },
 
       methods:{
-        dragChange (index, changeIndex, changeInnerIndex) {
-          let a = this.lists[changeIndex].items.splice(changeInnerIndex, 1);
-          this.lists[index].items.push(a[0]);
-          console.log(this.lists);
+        getData(url,callback = undefined){
+          this.$http.get(url).then(response => {
+            // get body data
+            if(response.data.code != 0) {
+              // this.notify(response.data.error);
+              alert(response.data.error);
+              return;
+            }
+            let data = response.data.data;
+            if(callback) {
+              callback(data);
+            }
+
+          }, error=> {
+            // error callback
+            this.notify(error)
+          });
+        },
+
+        postData(url,data,callback = undefined){
+          this.$http.post(url, data).then(response => {
+            if(response.data.code != 0) {
+              // this.notify(response.data.error);
+              alert(response.data.error);
+              return;
+            }
+            let data = response.data.data;
+            if(callback) {
+              callback(data);
+            }
+          }, error => {
+            // this.notify(error);
+            alert(error);
+          });
+        },
+
+        fetchData(){
+          console.log(this.projectId);
+          let url = "/api/project/involved/"+this.projectId+"?assets=1";
+          this.getData(url,(data)=>{
+            let project = data;
+            // console.log(project.assets);
+            if(project.assets==undefined){
+              this.lists=[];
+            }else{
+              this.lists = project.assets;
+            }
+            // console.log(this.lists);
+            // this.kblist = this.kanbanList();
+          })
+
+
+        },
+
+
+        dragChange (changeStatus,changeIndex, changeInnerIndex) {
+          let list = this.filterLists;
+          console.log(list);
+          let a = this.filterLists[changeIndex].items.splice(changeInnerIndex, 1);
+          console.log(a);
+          this.filterLists[index].items.push(a[0]);
+          console.log(this.filterLists);
         },
 
         showEditDialog(data){
@@ -483,9 +563,34 @@
 
         addTask(){
           // this.lists[0].items
-          this.editedShow = true;
-          this.editedItem = [];
-          this.editedItem.createDate = new Date().getTime();
+
+          this.newTaskShow = true;
+          console.log(this.newTaskShow);
+          // this.editedItem = [];
+
+
+          // this.lists[0].items.push(this.editedItem);
+        },
+
+        createTask(){
+          let createDate = new Date().getTime();
+
+          let urlCreate = "/api/asset/create/"+this.projectId;
+
+            this.newTask= {
+              "name":this.newTask.name,
+              "createDate": createDate,
+              "parent": "root",
+              "isFolder": true,
+              "status": "todo",
+              "children": [],
+            }
+
+            this.postData(urlCreate,this.newTask,(data)=>{
+              this.fetchData();
+            })
+
+          this.newTaskShow =false;
         },
 
         addMembers(){
@@ -497,6 +602,8 @@
         },
 
         onSave(){
+          this.task.createDate = new Date().getTime();
+
 
         },
 
@@ -509,6 +616,7 @@
 </script>
 
 <style scoped>
+
   .search{
     width: 60%;
     margin-bottom: 10px;
@@ -517,11 +625,15 @@
 
   .editDialog{
     z-index: 50;
-    max-width:300px;
+    width:300px;
     padding:0;
   }
 
-  div #leaf_card .card{
+  #leaf_card{
     padding:0;
+    height: auto;
+  }
+  .card{
+    height: auto;
   }
 </style>

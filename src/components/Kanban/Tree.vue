@@ -4,7 +4,7 @@
       :class="{bold: isFolder}"
       @click="toggle"
       @dblclick="changeType">
-      {{ model.name }}
+      {{ model}}
       <span v-if="isFolder">[{{ open ? '-' : '+' }}]</span>
     </div>
     <ul v-show="open" v-if="isFolder">
@@ -32,6 +32,15 @@
         computed:{
           model(){
             let lists = this.dataList;
+            for(let i=0;i<lists.length;i++){
+              let status = lists[i].status;
+              let items = lists[i].items;
+
+              for(let j=0;j<items.length;j++){
+                let refer_id = items[j].reference_id;
+
+              }
+            }
 
           }
         },

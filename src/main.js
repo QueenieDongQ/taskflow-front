@@ -14,7 +14,7 @@ Vue.use(VueResource)
 
 Vue.config.productionTip = false
 
-// Vue.component('addnewproject',AddNewProject)
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

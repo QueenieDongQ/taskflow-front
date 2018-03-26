@@ -23,8 +23,8 @@
             <td>
               <span style="font-size: 17px" >
                 <router-link :to="`/projects/${props.item._id}`">
-                <v-icon class="">folder</v-icon>{{ props.item.name }}
-                  </router-link>
+                    <v-icon class="">folder</v-icon>{{ props.item.name }}
+                </router-link>
               </span>
               <v-chip small outline color="green" v-if="props.item.startDate">{{ props.item.startDate }}</v-chip>
               <v-chip small outline color="red" v-if="props.item.dueDate" >{{ props.item.dueDate }}</v-chip>
@@ -90,7 +90,7 @@
           </v-card>
         </v-dialog>
 
-        <v-dialog v-model="editedShow" fullscreen
+        <v-dialog v-model="editedShow" max-width="500px"
                   transition="dialog-bottom-transition"
                   :overlay="false"
                   scrollable>
@@ -316,43 +316,50 @@
                       </v-layout>
                     </v-flex>
                   </v-layout>
-
-
-
-            <v-divider class="divide"/>
-
+              <v-divider class="divide"/>
 
               <v-layout row wrap>
-                <v-flex xs6>
-                  <v-text-field  label="Project Code" v-model="editedItem.code" :disabled="disable"/>
+                <v-flex xs4><v-subheader>Project Code</v-subheader></v-flex>
+                <v-flex xs8>
+                  <v-text-field v-model="editedItem.code" :disabled="disable"/>
                 </v-flex>
-
-                <v-flex xs6>
-                  <v-text-field  label="Client" v-model="editedItem.client" :disabled="disable"/>
+                <v-flex xs4><v-subheader>Client</v-subheader></v-flex>
+                <v-flex xs8>
+                  <v-text-field v-model="editedItem.client" :disabled="disable"/>
                 </v-flex>
-                <v-flex xs12>
-
+                <v-flex xs4><v-subheader>Part Number</v-subheader></v-flex>
+                <v-flex xs8>
                   <v-text-field
                     name="partNumber"
-                    label="Part Number"
                     v-model="editedItem.partNumber"
                     multi-line
                     :disabled="disable"
                   />
-                  <v-divider class="divide"/>
                 </v-flex>
+              </v-layout>
+              <v-divider class="divide"/>
 
-                <v-flex xs12>
+               <v-layout row wrap>
+                  <v-flex xs12>
+                    <v-subheader>Description</v-subheader>
 
-                  <v-text-field
-                    name="description"
-                    label="Description"
-                    v-model="editedItem.description"
-                    multi-line
-                    :disabled="disable"
-                  />
-                  <v-divider class="divide"/>
-                </v-flex>
+                      <v-layout row text-center>
+                        <v-flex xs12>
+                          <v-text-field
+                            name="description"
+                            v-model="editedItem.description"
+                            multi-line
+                            textarea
+
+                            style="width: 80%"
+                            :disabled="disable"
+                          />
+                        </v-flex>
+                      </v-layout>
+                  </v-flex>
+               </v-layout>
+                <v-divider></v-divider>
+                <v-layout>
                 <v-flex xs12>
                   <v-subheader>Checklist</v-subheader>
                   <v-divider class="divide"/>
@@ -365,13 +372,13 @@
               </v-container>
             </v-card-text>
 
-            <v-footer>
-              <v-layout row>
-                <v-spacer/>
-                <v-flex xs9><v-text-field style="" label="Comment"/></v-flex>
-                <v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>
-              </v-layout>
-            </v-footer>
+            <!--<v-footer>-->
+              <!--<v-layout row>-->
+                <!--<v-spacer/>-->
+                <!--<v-flex xs9><v-text-field style="" label="Comment"/></v-flex>-->
+                <!--<v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>-->
+              <!--</v-layout>-->
+            <!--</v-footer>-->
           </v-card>
 
         </v-dialog>

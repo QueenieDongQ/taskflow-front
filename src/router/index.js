@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Userinfo from '@/components/User/Userinfo'
 
-import Board from '@/components/Kanban/Board'
 import AdminUser from '@/components/Admin/AdminUser'
 
 import myTask from '@/components/Task/myTask'
@@ -17,12 +16,7 @@ export default new Router({
       name: 'Userinfo',
       component: Userinfo
     },
-    {
-      path: '/board',
-      name: 'board',
-      component: Board,
 
-    },
     {
       path: '/admin',
       name: 'admin',
@@ -38,14 +32,14 @@ export default new Router({
       //     path:'projects/:id',
       //     name:'myTask',
       //     component:myTask,
-      //     props: { assets:" "}
       //   }
       // ]
     },
     {
-      path:'/projects/:id',
+      path:'/projects/:projectId',
       name:'myTask',
       component:myTask,
+      props: true
     },
     {
       path: '/TreeList',
