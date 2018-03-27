@@ -67,21 +67,45 @@
             </v-flex>
             <v-divider></v-divider>
             <v-flex xs12>
-              <v-layout row wrap>
-                <v-flex xs4 v-for="(list, index) in filterLists" :key="index">
-                  <board :key="index"
-                         @dragChange="dragChange" :title="list.name" :index="index">
-                    <card v-for="(innerItem, innerIndex) in list.items"
-                          :key="index + '-' + innerIndex"
-                          :data="innerItem"
-                          :innerIndex="innerIndex"
-                          :index="index"
-                          :innerStatus="innerItem.status"
-                          @listenEditItem="showEditDialog"
-                          @listenEditClose="closeEditDialog"></card>
-                  </board>
-                </v-flex>
-              </v-layout>
+              <!--<v-layout row wrap>-->
+                <!--<v-flex xs4 v-for="(list, index) in kanbanlist" :key="index">-->
+                  <!--<board :key="index"-->
+                         <!--@dragChange="dragChange" :title="list.name" :index="index">-->
+                    <!--<card v-for="(innerItem, innerIndex) in list.items"-->
+                          <!--:key="index + '-' + innerIndex"-->
+                          <!--:data="innerItem"-->
+                          <!--:innerIndex="innerIndex"-->
+                          <!--:index="index"-->
+                          <!--:innerStatus="innerItem.status"-->
+                          <!--@listenEditItem="showEditDialog"-->
+                          <!--@listenEditClose="closeEditDialog"></card>-->
+                  <!--</board>-->
+                <!--</v-flex>-->
+
+
+              <kanban :stages="statuses" :blocks="filterLists" @update-block="updateBlock">
+                <div v-for="item in blocks" :slot="item.reference_id" :key="item.reference_id" class="">
+                  <!--<div>-->
+                    <!--<strong>id:</strong> {{ item.reference_id }}-->
+                  <!--</div>-->
+                  <!--<div>-->
+                    <!--{{ item.name }}-->
+                  <!--</div>-->
+                  <v-card>
+                    <v-list>
+                      <v-list-tile>
+                        <v-list-tile-title>{{ item.name }}</v-list-tile-title>
+                        <v-list-tile-action>
+                          <v-btn icon ripple @click="editItem(item)">
+                           <v-icon color="grey lighten-1">info</v-icon>
+                          </v-btn>
+                        </v-list-tile-action>
+                      </v-list-tile></v-list>
+
+                  </v-card>
+                </div>
+              </kanban>
+              <!--</v-layout>-->
             </v-flex>
           </v-layout>
         </v-container>
@@ -373,8 +397,9 @@
   import Board from '@/components/Kanban/Board'
   import Card from '@/components/Kanban/Card'
   import Tree from '@/components/Kanban/Tree'
-
-
+  import faker from 'faker';
+  import { debounce } from 'lodash';
+  import Kanban from '@/components/Kanban/Kanban';
 
   export default {
 
@@ -384,7 +409,7 @@
         'board':Board,
         'card':Card,
         'tree':Tree,
-
+        'kanban':Kanban
       },
       data(){
         return{
@@ -393,11 +418,15 @@
           newTask:{},
           dialog2:false,
           statuses:[
-            { "name": "TO DO", "status":"todo", "items":[]},
-            { "name": "In Progress" ,"status":"progress", "items":[]},
-            { "name": "Done","status":"done", "items":[] },
+           "todo","progress","done"
           ],
-          lists:[],
+          blocks:[
+            {"reference_id":1,"status":"todo","name":"test1"},
+            {"reference_id":2,"status":"todo","name":"test2"},
+            {"reference_id":3,"status":"progress","name":"test3"},
+            {"reference_id":4,"status":"done","name":"test4"},
+            {"reference_id":5,"status":"progress","name":"test5"},
+          ],
 
           editedInfo:[],
           editedItem:{},
@@ -434,52 +463,28 @@
       },
 
       computed:{
-        kanbanlist(){
-          let lists = this.lists;
-          // console.log(lists);
-          let statuses = this.statuses;
-          for(let i=0;i<lists.length;i++){
-            let status = lists[i].status;
 
-             let result = statuses.find((v) => {
-               return v.status == status;
-             });
-
-            let index = statuses.indexOf(result);
-            // console.log(index);
-            statuses[index].items.push(lists[i]);
-            // console.log(statuses);
-
-          }
-          // console.log(statuses);
-          return statuses;
-        },
-
-        treelist(){
-
-        },
-
+        //
+        // treelist(){
+        //
+        // },
+        //
         filterLists(){
-          let lists = this.kanbanlist;
+          let lists = this.blocks;
           // console.log(lists);
           let search = this.search;
           if( !search ){
             return lists
           }
           search =search.trim().toLowerCase();
-          var newArr = [];
-          for(let i=0;i<lists.length;i++){
+          let newArr = [];
+          newArr = lists.filter(function (item) {
+            let index = item.name.trim().toLowerCase().indexOf(search);
+            if( index !== -1){
+              return item;
+            }
+          });
 
-            let status = lists[i].status;
-            let arr=lists[i].items;
-            arr = arr.filter(function(item){
-              let index = item.name.trim().toLowerCase().indexOf(search);
-              if( index !== -1){
-                return item;
-              }
-            });
-            newArr[i]={"status":status, "items":arr}
-          }
           console.log(newArr);
           return newArr;
         }
@@ -529,32 +534,43 @@
             let project = data;
             // console.log(project.assets);
             if(project.assets==undefined){
-              this.lists=[];
+              this.blocks=[];
             }else{
-              this.lists = project.assets;
+              this.blocks = project.assets;
             }
-            // console.log(this.lists);
+            console.log(this.lists);
             // this.kblist = this.kanbanList();
           })
 
-
         },
 
+        updateBlock: debounce(function (reference_id, status) {
+          const url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
+          // this.blocks.find(b => b.reference_id === Number(reference_id)).status = status;
+          // console.log(this.blocks);
 
-        dragChange (changeStatus,changeIndex, changeInnerIndex) {
-          let list = this.filterLists;
-          console.log(list);
-          let a = this.filterLists[changeIndex].items.splice(changeInnerIndex, 1);
-          console.log(a);
-          this.filterLists[index].items.push(a[0]);
-          console.log(this.filterLists);
+          let block = this.blocks.find( b => b.reference_id === Number(reference_id));
+          block.status = status;
+          console.log(block);
+
+          this.postData(url,block,()=>{
+            this.fetchData();
+          })
+        }, 500),
+
+
+        editItem (item) {
+          this.editedIndex = this.items.indexOf(item);
+          this.editedItem = Object.assign({}, item);
+          this.editedShow = true;
+          console.log(this.editedItem);
         },
 
-        showEditDialog(data){
-          console.log(data);
-          this.editedItem = data.itemInfo;
-          this.editedShow = data.show;
-        },
+        // showEditDialog(data){
+        //   console.log(data);
+        //   this.editedItem = data.itemInfo;
+        //   this.editedShow = data.show;
+        // },
 
         closeEditDialog(data){
           console.log(data);

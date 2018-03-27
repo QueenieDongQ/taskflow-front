@@ -21,10 +21,10 @@
       drop (ev) {
         let dragBoxIndex = ev.dataTransfer.getData('index');
         let dragBoxInnerIndex = ev.dataTransfer.getData('innerIndex');
-        let dragBoxStatus = ev.dataTransfer.getData('innerStatus');
+
         console.log(ev);
         ev.preventDefault();
-        this.$emit('dragChange',this.index, dragBoxStatus, dragBoxIndex, dragBoxInnerIndex);
+        this.$emit('dragChange',this.index, dragBoxIndex, dragBoxInnerIndex);
       }
     }
   }

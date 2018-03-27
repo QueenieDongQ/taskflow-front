@@ -7,7 +7,9 @@ import App from './App'
 import router from './router'
 
 import VueResource from 'vue-resource';
+import vueKanban from 'vue-kanban'
 
+Vue.use(vueKanban)
 
 Vue.use(Vuetify)
 Vue.use(VueResource)
