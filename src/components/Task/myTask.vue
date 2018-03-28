@@ -45,13 +45,10 @@
 
 
     <v-layout row>
-      <v-flex xs2>
-        <!--<vue-drag-tree v-model="lists" ></vue-drag-tree>-->
-        <ul>
-          <!--<tree :dataList="lists"></tree>-->
-        </ul>
+      <v-flex xs3>
+        <tree @click="onClick" :model="treelist" default-tree-node-name="new node" default-leaf-node-name="new leaf"></tree>
       </v-flex>
-      <v-flex xs10>
+      <v-flex xs9>
         <v-container fluid>
           <v-layout row wrap>
             <v-flex xs12>
@@ -67,30 +64,9 @@
             </v-flex>
             <v-divider></v-divider>
             <v-flex xs12>
-              <!--<v-layout row wrap>-->
-                <!--<v-flex xs4 v-for="(list, index) in kanbanlist" :key="index">-->
-                  <!--<board :key="index"-->
-                         <!--@dragChange="dragChange" :title="list.name" :index="index">-->
-                    <!--<card v-for="(innerItem, innerIndex) in list.items"-->
-                          <!--:key="index + '-' + innerIndex"-->
-                          <!--:data="innerItem"-->
-                          <!--:innerIndex="innerIndex"-->
-                          <!--:index="index"-->
-                          <!--:innerStatus="innerItem.status"-->
-                          <!--@listenEditItem="showEditDialog"-->
-                          <!--@listenEditClose="closeEditDialog"></card>-->
-                  <!--</board>-->
-                <!--</v-flex>-->
-
-
               <kanban :stages="statuses" :blocks="filterLists" @update-block="updateBlock">
                 <div v-for="item in blocks" :slot="item.reference_id" :key="item.reference_id" class="">
-                  <!--<div>-->
-                    <!--<strong>id:</strong> {{ item.reference_id }}-->
-                  <!--</div>-->
-                  <!--<div>-->
-                    <!--{{ item.name }}-->
-                  <!--</div>-->
+
                   <v-card>
                     <v-list>
                       <v-list-tile>
@@ -105,7 +81,6 @@
                   </v-card>
                 </div>
               </kanban>
-              <!--</v-layout>-->
             </v-flex>
           </v-layout>
         </v-container>
@@ -396,11 +371,11 @@
 
   import Board from '@/components/Kanban/Board'
   import Card from '@/components/Kanban/Card'
-  import Tree from '@/components/Kanban/Tree'
-  import faker from 'faker';
+
   import { debounce } from 'lodash';
   import Kanban from '@/components/Kanban/Kanban';
 
+  import { VueTreeList, Tree, TreeNode } from 'vue-tree-list'
   export default {
 
     name: "my-task",
@@ -409,7 +384,8 @@
         'board':Board,
         'card':Card,
         'tree':Tree,
-        'kanban':Kanban
+        'kanban':Kanban,
+        'tree':VueTreeList
       },
       data(){
         return{
@@ -421,11 +397,15 @@
            "todo","progress","done"
           ],
           blocks:[
-            {"reference_id":1,"status":"todo","name":"test1"},
-            {"reference_id":2,"status":"todo","name":"test2"},
-            {"reference_id":3,"status":"progress","name":"test3"},
-            {"reference_id":4,"status":"done","name":"test4"},
-            {"reference_id":5,"status":"progress","name":"test5"},
+            // {"reference_id":1,"status":"todo","name":"test1", "parent":null, "children":[],},
+            // {"reference_id":2,"status":"todo","name":"test2", "parent":null, "children":[6,],},
+            // {"reference_id":3,"status":"progress","name":"test3", "parent":null, "children":[7,]},
+            // {"reference_id":4,"status":"done","name":"test4"},
+            // {"reference_id":5,"status":"progress","name":"test5"},
+            // {"reference_id":6,"status":"todo","name":"test2-1","parent":2,"children":[],},
+            // {"reference_id":7,"status":"todo","name":"test3-1","parent":3,"children":[],},
+            // {"reference_id":8,"status":"todo","name":"test3-2","parent":3,"children":[],},
+
           ],
 
           editedInfo:[],
@@ -455,6 +435,35 @@
           allLabels:[],
           selectedLabels:[],
 
+          newTree: {},
+          data: new Tree([
+            {
+              name: 'Node 1',
+              id: 1,
+              pid: 0,
+              dragDisabled: true,
+              children: [
+                {
+                  name: 'Node 1-2',
+                  id: 2,
+                  isLeaf: true,
+                  parent: 1
+                }
+              ]
+            },
+            {
+              name: 'Node 2',
+              id: 3,
+              pid: 0,
+              dragDisabled: true
+            },
+            {
+              name: 'Node 3',
+              id: 4,
+              pid: 0
+            }
+          ])
+
         }
       },
 
@@ -464,11 +473,30 @@
 
       computed:{
 
-        //
-        // treelist(){
-        //
-        // },
-        //
+
+        treelist(){
+          let blocks = this.blocks;
+
+          let newArr = [];
+          let x=0;
+          for(let i = 0;i < blocks.length;i++){
+
+            let block = blocks[i];
+
+            //找到parent == null的节点 --- 根节点
+            if(block.parent==null){
+              block.children=[];
+              newArr.push(block);
+
+            }else{
+             //有parent
+              newArr = this.childrenIterator(newArr,block); //找到该父节点
+            }
+          }
+          let treeArr = new Tree(newArr);
+          return treeArr;
+        },
+
         filterLists(){
           let lists = this.blocks;
           // console.log(lists);
@@ -485,7 +513,6 @@
             }
           });
 
-          console.log(newArr);
           return newArr;
         }
       },
@@ -538,9 +565,9 @@
             }else{
               this.blocks = project.assets;
             }
-            console.log(this.lists);
-            // this.kblist = this.kanbanList();
           })
+
+          // console.log(this;
 
         },
 
@@ -557,6 +584,56 @@
             this.fetchData();
           })
         }, 500),
+
+        childrenIterator(arr,block) {
+
+          arr.map((obj)=>{
+            if(obj.reference_id == block.parent){
+              if(block.deps!=null){
+               block.children=[];
+              }
+              obj.children.push(block)
+
+            }else{
+              this.childrenIterator(obj.children,block);
+            }
+          })
+          return arr;
+        },
+
+        addNode: function () {
+          var node = new TreeNode({ name: 'new node', isLeaf: false });
+          if (!this.data.children) this.data.children = [];
+          this.data.addChildren(node);
+        },
+
+        getNewTree: function () {
+          var vm = this
+          function _dfs (oldNode) {
+            var newNode = {}
+
+            for (var k in oldNode) {
+              if (k !== 'children' && k !== 'parent') {
+                newNode[k] = oldNode[k]
+              }
+            }
+
+            if (oldNode.children && oldNode.children.length > 0) {
+              newNode.children = []
+              for (var i = 0, len = oldNode.children.length; i < len; i++) {
+                newNode.children.push(_dfs(oldNode.children[i]))
+              }
+            }
+            return newNode
+          }
+
+          vm.newTree = _dfs(vm.data)
+        },
+
+        onClick(model) {
+          console.log(model)
+        },
+
 
 
         editItem (item) {
