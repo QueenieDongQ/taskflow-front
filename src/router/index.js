@@ -6,7 +6,9 @@ import AdminUser from '@/components/Admin/AdminUser'
 
 import myTask from '@/components/Task/myTask'
 import AllProjects from '@/components/Task/AllProjects'
-import TreeList from '@/components/Task/TreeList'
+
+import Gantt from '@/components/Task/myGantt'
+
 Vue.use(Router)
 
 export default new Router({
@@ -27,13 +29,7 @@ export default new Router({
       path: '/projects',
       name: 'projects',
       component: AllProjects,
-      // children:[
-      //   {
-      //     path:'projects/:id',
-      //     name:'myTask',
-      //     component:myTask,
-      //   }
-      // ]
+
     },
     {
       path:'/projects/:projectId',
@@ -42,10 +38,10 @@ export default new Router({
       props: true
     },
     {
-      path: '/TreeList',
-      name: 'TreeList',
-      component: TreeList
-    },
+      path:'/mytasks/gantt',
+      name:'gantt',
+      component:Gantt,
+    }
 
   ]
 })

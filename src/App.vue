@@ -146,6 +146,9 @@
     }),
     props: {
       source: String
+    },
+    methods:{
+
     }
 
   }

@@ -470,51 +470,17 @@
       },
 
       methods:{
-        getData(url,callback = undefined){
-          this.$http.get(url).then(response => {
-            // get body data
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-              return;
-            }
-            let data = response.data.data;
-            if(callback) {
-              callback(data);
-            }
 
-          }, error=> {
-            // error callback
-            this.notify(error)
-          });
-        },
-
-        postData(url,data,callback = undefined){
-          this.$http.post(url, data).then(response => {
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-              return;
-            }
-            let data = response.data.data;
-            if(callback) {
-              callback(data);
-            }
-          }, error => {
-            // this.notify(error);
-            alert(error);
-          });
-        },
 
         fetchData(callback = undefined) {
           let urlUser = "/api/user/all";
-          this.getData(urlUser,(data)=>{
+          getData(this,urlUser,(data)=>{
             //get people data
             this.people = data;
 
             //get projects data
             let urlProject = "/api/project/involved";
-            this.getData(urlProject,(data)=>{
+            window.getData(this,urlProject,(data)=>{
               let items = data;
 
               for(let i = 0 ;i<items.length;i++) {
@@ -537,7 +503,7 @@
 
               }
               this.items = items;
-              console.log(this.items);
+
 
               let d = this.items;
               if(callback) {
@@ -557,7 +523,7 @@
           // date.getMinutes(); // 获取分钟数(0-59)
           // date.getSeconds(); // 获取秒数(0-59)
 
-          return year+"."+month+"."+day;
+          return year+"-"+month+"-"+day;
         },
 
         searchMemberInfo(id,target){
@@ -583,7 +549,7 @@
 
           this.allLabels = this.editedItem.labels;
           let labels = this.allLabels;
-          console.log(labels);
+          // console.log(labels);
           let j=0;
           for(let i=0;i<labels.length;i++){
 
@@ -592,7 +558,7 @@
               j++;
             }
           }
-          console.log(this.editedItem);
+
         },
 
         createProject(){
@@ -602,7 +568,7 @@
           // this.project.labels =
 
           let urlCreate = "/api/project/create";
-          this.postData(urlCreate,this.project,()=>{
+          postData(this,urlCreate,this.project,()=>{
             this.fetchData();
           });
           this.dialog=false;
@@ -628,7 +594,7 @@
             Object.assign(that.items[that.editedIndex], item);
 
             let urlUpdate = "/api/project/"+pid+"/update";
-            this.postData(urlUpdate,item,()=>{
+            postData(this,urlUpdate,item,()=>{
               alert("Save successfully!");
               this.fetchData();
             });
@@ -644,7 +610,7 @@
 
           if(r === true) {
             let urlDelete = '/api/project/' + pid + '/delete';
-            this.postData(urlDelete, item, () => {
+            postData(this,urlDelete, item, () => {
               alert('Delete successfully!');
               this.fetchData();
               this.editedShow = false;
@@ -665,7 +631,8 @@
           // console.log(that.editedItem);
 
           let urlAdd = "/api/project/"+pid+"/member/add";
-          this.postData(urlAdd,id,()=> {
+
+          postData(this,urlAdd,id,()=> {
             this.fetchData( (d)=>{
               let items = d;
               this.items = items;
@@ -681,9 +648,9 @@
           let that = this;
           let pid=that.editedItem._id;
           let memberID=[item._id];
-          console.log(memberID);
+
           let urlDelete = "/api/project/"+pid+"/member/delete";
-          this.postData(urlDelete,memberID,()=>{
+          postData(this,urlDelete,memberID,()=>{
             this.fetchData((d)=>{
               let items = d;
               this.items = items;

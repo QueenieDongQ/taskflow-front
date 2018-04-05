@@ -46,7 +46,20 @@
 
     <v-layout row>
       <v-flex xs3>
-        <tree @click="onClick" :model="treelist" default-tree-node-name="new node" default-leaf-node-name="new leaf"></tree>
+        <v-layout row wrap>
+          <v-flex xs12>
+            <v-btn @click="filterFolder =''">Show All Task</v-btn>
+          </v-flex>
+          <v-flex xs12 style="overflow: scroll">
+            <tree
+              @fetchData="fetchData"
+              @click="onClick"
+              :model="treelist"
+              :blocks="blocks"
+              default-tree-node-name="new node"
+              default-leaf-node-name="new leaf"></tree>
+          </v-flex>
+        </v-layout>
       </v-flex>
       <v-flex xs9>
         <v-container fluid>
@@ -90,6 +103,7 @@
     <v-dialog v-model="editedShow"
               transition="dialog-bottom-transition"
               :overlay="false"
+              max-width="500px"
               scrollable class="editDialog">
 
       <v-card id="leaf_card" justify-center text-xs-center>
@@ -104,7 +118,7 @@
           <v-spacer/>
           <v-toolbar-items>
             <v-btn icon @click=" disable = !disable " v-if="disable"><i class="material-icons" >edit</i></v-btn>
-            <v-btn icon  @click="onSave" v-if="!disable"><i class="material-icons">save</i></v-btn>
+            <v-btn icon  @click="onSave(editedItem)" v-if="!disable"><i class="material-icons">save</i></v-btn>
             <v-menu bottom right offset-y>
               <v-btn slot="activator" dark icon>
                 <v-icon>more_vert</v-icon>
@@ -122,17 +136,22 @@
         </v-toolbar>
 
         <v-card-text>
-          <v-container>
-            <v-subheader>Progress:
-              <v-progress-linear
-                :value="progress_value"
-                height="7"
-                color="success"
-              />
-              {{progress_value}}%
-            </v-subheader>
+          <v-layout row wrap>
+            <v-flex xs8>
+              <v-subheader>Progress:
+                <v-progress-linear
+                  :value="progress_value"
+                  height="7"
+                  color="success"
+                />
+                {{progress_value}}%
+              </v-subheader>
+            </v-flex>
+            <v-flex xs4>
 
-
+            </v-flex>
+          </v-layout>
+          <v-divider></v-divider>
             <v-layout row wrap>
               <v-flex xs3>
                 <v-subheader >Start
@@ -352,7 +371,6 @@
             </v-layout>
 
 
-          </v-container>
         </v-card-text>
         <!--<v-footer height="auto">-->
 
@@ -369,24 +387,23 @@
 
 <script>
 
-  import Board from '@/components/Kanban/Board'
-  import Card from '@/components/Kanban/Card'
-
   import { debounce } from 'lodash';
   import Kanban from '@/components/Kanban/Kanban';
 
-  import { VueTreeList, Tree, TreeNode } from 'vue-tree-list'
+  import  TreeList from '@/components/Kanban/TreeList'
+  import {Tree} from '@/components/Kanban/Tree.js'
+
   export default {
 
     name: "my-task",
     props: ['projectId'],
     components:{
-        'board':Board,
-        'card':Card,
-        'tree':Tree,
+
         'kanban':Kanban,
-        'tree':VueTreeList
+        // 'tree':VueTreeList,
+        'tree':TreeList
       },
+
       data(){
         return{
           search:"",
@@ -405,7 +422,6 @@
             // {"reference_id":6,"status":"todo","name":"test2-1","parent":2,"children":[],},
             // {"reference_id":7,"status":"todo","name":"test3-1","parent":3,"children":[],},
             // {"reference_id":8,"status":"todo","name":"test3-2","parent":3,"children":[],},
-
           ],
 
           editedInfo:[],
@@ -434,41 +450,15 @@
 
           allLabels:[],
           selectedLabels:[],
-
-          newTree: {},
-          data: new Tree([
-            {
-              name: 'Node 1',
-              id: 1,
-              pid: 0,
-              dragDisabled: true,
-              children: [
-                {
-                  name: 'Node 1-2',
-                  id: 2,
-                  isLeaf: true,
-                  parent: 1
-                }
-              ]
-            },
-            {
-              name: 'Node 2',
-              id: 3,
-              pid: 0,
-              dragDisabled: true
-            },
-            {
-              name: 'Node 3',
-              id: 4,
-              pid: 0
-            }
-          ])
+          filterFolder:"",
 
         }
       },
 
-      created(){
+      mounted(){
+
         this.fetchData();
+        // this.setIntervalData()
       },
 
       computed:{
@@ -476,13 +466,11 @@
 
         treelist(){
           let blocks = this.blocks;
-
-          let newArr = [];
-          let x=0;
+          let newArr =[];
           for(let i = 0;i < blocks.length;i++){
 
             let block = blocks[i];
-
+            block.projectId = this.projectId;
             //找到parent == null的节点 --- 根节点
             if(block.parent==null){
               block.children=[];
@@ -493,20 +481,40 @@
               newArr = this.childrenIterator(newArr,block); //找到该父节点
             }
           }
-          let treeArr = new Tree(newArr);
+
+          // console.log(newArr);
+          let tree = [{
+            "name":"Root",
+            "reference_id":"root",
+            "children":newArr,
+            // "projectId":this.projectId
+          }]
+          // console.log(tree);
+          let treeArr = new Tree(tree);
           return treeArr;
+          // return tree;
         },
 
         filterLists(){
           let lists = this.blocks;
           // console.log(lists);
           let search = this.search;
-          if( !search ){
-            return lists
-          }
+          let filterFolder = this.filterFolder;
           search =search.trim().toLowerCase();
           let newArr = [];
-          newArr = lists.filter(function (item) {
+
+          if(filterFolder !=""){
+            newArr = lists.filter((item)=>{
+              return item.parent === filterFolder;
+            })
+          }else{
+            newArr = lists;
+          }
+          if( !search ){
+            return newArr;
+          }
+
+          newArr = newArr.filter(function (item) {
             let index = item.name.trim().toLowerCase().indexOf(search);
             if( index !== -1){
               return item;
@@ -518,61 +526,62 @@
       },
 
       methods:{
-        getData(url,callback = undefined){
-          this.$http.get(url).then(response => {
-            // get body data
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-              return;
-            }
-            let data = response.data.data;
-            if(callback) {
-              callback(data);
-            }
-
-          }, error=> {
-            // error callback
-            this.notify(error)
-          });
+        setIntervalData(){
+          setInterval(() => {
+            this.fetchData();
+          }, 5000)
         },
 
-        postData(url,data,callback = undefined){
-          this.$http.post(url, data).then(response => {
-            if(response.data.code != 0) {
-              // this.notify(response.data.error);
-              alert(response.data.error);
-              return;
-            }
-            let data = response.data.data;
-            if(callback) {
-              callback(data);
-            }
-          }, error => {
-            // this.notify(error);
-            alert(error);
-          });
-        },
+        fetchData()
+          {
+            // console.log(this.projectID);
+            let url = "/api/project/involved/" + this.projectId + "?assets=1";
+            // console.log(this, window, window.globalVueInstance);
+            getData(this, url, (data) => {
+              let project = data;
+              // console.log(project.assets);
+              if (project.assets == undefined) {
+                this.blocks = [];
+              } else {
+                let blocks = project.assets;
 
-        fetchData(){
-          console.log(this.projectId);
-          let url = "/api/project/involved/"+this.projectId+"?assets=1";
-          this.getData(url,(data)=>{
-            let project = data;
-            // console.log(project.assets);
-            if(project.assets==undefined){
-              this.blocks=[];
-            }else{
-              this.blocks = project.assets;
-            }
-          })
+                blocks = blocks.map((item) => {
+                  // console.log(item);
+                  if (item.startDateUTC != 0) {
+                    item.startDate = this.convertLocalTime(item.startDateUTC);
+                  }
+                  if (item.dueDateUTC != 0) {
+                    item.dueDate = this.convertLocalTime(item.dueDateUTC);
+                  }
+                  return item;
 
-          // console.log(this;
+                })
+                this.blocks = blocks;
+              }
+            })
 
+            // setTimeout(function () {
+            //   this.fetchData()
+            // }, 2000);
+          },
+
+
+
+        convertLocalTime(time){
+          let date = new Date(time);
+          let year = date.getFullYear(); // 获取完整的年份(4位,1970)
+          let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
+          let day = date.getDate(); // 获取日(1-31)
+          // date.getTime(); // 获取时间(从1970.1.1开始的毫秒数)
+          // date.getHours(); // 获取小时数(0-23)
+          // date.getMinutes(); // 获取分钟数(0-59)
+          // date.getSeconds(); // 获取秒数(0-59)
+
+          return year+"-"+month+"-"+day;
         },
 
         updateBlock: debounce(function (reference_id, status) {
-          const url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
+          let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
           // this.blocks.find(b => b.reference_id === Number(reference_id)).status = status;
           // console.log(this.blocks);
 
@@ -580,7 +589,7 @@
           block.status = status;
           console.log(block);
 
-          this.postData(url,block,()=>{
+          postData(this,url,block,()=>{
             this.fetchData();
           })
         }, 500),
@@ -592,12 +601,12 @@
               if(block.deps!=null){
                block.children=[];
               }
-              obj.children.push(block)
+              obj.children.push(block);
 
             }else{
               this.childrenIterator(obj.children,block);
             }
-          })
+          });
           return arr;
         },
 
@@ -631,9 +640,15 @@
         },
 
         onClick(model) {
-          console.log(model)
-        },
+          // console.log(this);
+          let pid = model.reference_id;
+          if(pid =="root"){
+            this.filterFolder = null;
+          }else{
+            this.filterFolder = pid;
+          }
 
+        },
 
 
         editItem (item) {
@@ -642,12 +657,6 @@
           this.editedShow = true;
           console.log(this.editedItem);
         },
-
-        // showEditDialog(data){
-        //   console.log(data);
-        //   this.editedItem = data.itemInfo;
-        //   this.editedShow = data.show;
-        // },
 
         closeEditDialog(data){
           console.log(data);
@@ -673,15 +682,19 @@
             this.newTask= {
               "name":this.newTask.name,
               "createDate": createDate,
-              "parent": "root",
+              "parent": null,
               "isFolder": true,
               "status": "todo",
               "children": [],
+              "startDate":0,
+              "dueDate":0,
+
             }
 
-            this.postData(urlCreate,this.newTask,(data)=>{
+            window.postData(this,urlCreate,this.newTask,(data)=>{
               this.fetchData();
             })
+
 
           this.newTaskShow =false;
         },
@@ -694,9 +707,20 @@
 
         },
 
-        onSave(){
-          this.task.createDate = new Date().getTime();
+        onSave(item){
+          // this.task.createDate = new Date().getTime();
+          console.log(item);
+          item.startDateUTC = new Date(item.startDate).getTime();
+          delete item.startDate;
+          item.dueDateUTC = new Date(item.dueDate).getTime();
+          delete item.dueDate;
 
+          let url = "/api/asset/update/"+item.reference_id+"/of/"+this.projectId;
+          window.postData(this,url,item,()=>{
+            this.fetchData();
+          })
+
+          this.editedShow = false;
 
         },
 
@@ -728,5 +752,16 @@
   }
   .card{
     height: auto;
+  }
+  .item {
+    cursor: pointer;
+  }
+  .bold {
+    font-weight: bold;
+  }
+  ul {
+    padding-left: 1em;
+    line-height: 1.5em;
+    list-style-type: dot;
   }
 </style>
