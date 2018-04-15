@@ -110,7 +110,7 @@
     name: "home",
     data: () => ({
       dialog: false,
-      drawer: null,
+      drawer: false,
       items: [
         { icon: 'contacts', text: 'Contacts' },
         { icon: 'history', text: 'Frequently contacted' },

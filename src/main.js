@@ -1,23 +1,22 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
+import Vuex from 'vuex'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css' // Ensure you are using css-loader
 import App from './App'
 import router from './router'
 
 import VueResource from 'vue-resource';
-import vueKanban from 'vue-kanban'
 
-Vue.use(vueKanban)
-
+Vue.use(Vuex)
 Vue.use(Vuetify)
 Vue.use(VueResource)
 
 Vue.config.productionTip = false
 
 
-window.getData = (that, url,callback = undefined) => {
+  window.getData = (that, url,callback = undefined) => {
 
   that.$http.get(url).then(response => {
     // get body data
@@ -35,8 +34,7 @@ window.getData = (that, url,callback = undefined) => {
     // error callback
     that.notify(error)
   });
-},
-
+  },
   window.postData = (that, url, data, callback = undefined) => {
     that.$http.post(url, data).then(response => {
       if(response.data.code != 0) {
@@ -52,16 +50,26 @@ window.getData = (that, url,callback = undefined) => {
       // this.notify(error);
       alert(error);
     });
-  }
+  },
+
+
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
   router,
   components: { App },
   template: '<App/>',
+  data(){
+    return {
+
+    }
+
+  },
+  mounted(){
+
+  },
   methods:{
-
-
 
   }
 })

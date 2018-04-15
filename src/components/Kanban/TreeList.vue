@@ -2,21 +2,21 @@
   <div>
     <div v-if="model.name !== 'root'">
       <div class="border up" :class="{'active': isDragEnterUp}"
-        @drop="dropUp"
-        @dragenter="dragEnterUp"
-        @dragover='dragOverUp'
-        @dragleave="dragLeaveUp"></div>
+           @drop="dropUp"
+           @dragenter="dragEnterUp"
+           @dragover='dragOverUp'
+           @dragleave="dragLeaveUp"></div>
       <div class='tree-node' :id='model.id' :class="{'active': isDragEnterNode}"
-        :draggable="!model.dragDisabled"
-        @dragstart='dragStart'
-        @dragover='dragOver'
-        @dragenter='dragEnter'
-        @dragleave='dragLeave'
-        @drop='drop'
-        @dragend='dragEnd'
-        @mouseover='mouseOver'
-        @mouseout='mouseOut'
-        @click.stop='click'>
+           :draggable="!model.dragDisabled"
+           @dragstart='dragStart'
+           @dragover='dragOver'
+           @dragenter='dragEnter'
+           @dragleave='dragLeave'
+           @drop='drop'
+           @dragend='dragEnd'
+           @mouseover='mouseOver'
+           @mouseout='mouseOut'
+           @click.stop='click'>
         <span class="caret icon is-small" v-if="model.children && model.children.length > 0">
           <i class="vue-tree-icon" :class="caretClass" @click.prevent.stop="toggle"></i>
         </span>
@@ -37,7 +37,7 @@
         </div>
         <input v-else class="vue-tree-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="setUnEditable">
         <div class="operation" v-show="isHover">
-          <span title="add tree node" @click.stop.prevent="addChild(false)" v-if="!model.isLeaf">
+          <span title="add tree node" @click.stop.prevent="addChild(false)" v-if="!model.isLeaf && model.reference_id =='root'">
             <slot name="addTreeNode">
               <i class="vue-tree-icon icon-folder-plus-e"></i>
             </slot>
@@ -61,20 +61,20 @@
       </div>
 
       <div v-if="model.children && model.children.length > 0 && expanded"
-        class="border bottom"
-        :class="{'active': isDragEnterBottom}"
-        @drop="dropBottom"
-        @dragenter="dragEnterBottom"
-        @dragover='dragOverBottom'
-        @dragleave="dragLeaveBottom"></div>
+           class="border bottom"
+           :class="{'active': isDragEnterBottom}"
+           @drop="dropBottom"
+           @dragenter="dragEnterBottom"
+           @dragover='dragOverBottom'
+           @dragleave="dragLeaveBottom"></div>
     </div>
 
     <div :class="{'tree-margin': model.name !== 'root'}" v-show="expanded" v-if="isFolder">
       <tree-list v-for="model in model.children"
-        :default-tree-node-name="defaultTreeNodeName"
-        :default-leaf-node-name="defaultLeafNodeName"
-        :model="model"
-        :key='model.id'>
+                 :default-tree-node-name="defaultTreeNodeName"
+                 :default-leaf-node-name="defaultLeafNodeName"
+                 :model="model"
+                 :key='model.id'>
       </tree-list>
     </div>
   </div>
@@ -103,17 +103,17 @@
     },
 
     props: {
-        model: {
-          type: Object
-        },
-        defaultLeafNodeName: {
-          type: String,
-          default: 'New leaf node'
-        },
-        defaultTreeNodeName: {
-          type: String,
-          default: 'New tree node'
-        },
+      model: {
+        type: Object
+      },
+      defaultLeafNodeName: {
+        type: String,
+        default: 'New leaf node'
+      },
+      defaultTreeNodeName: {
+        type: String,
+        default: 'New tree node'
+      },
 
     },
 
@@ -135,7 +135,7 @@
 
     },
     created(){
-      console.log(this.model);
+      // console.log(this.model);
     },
     mounted () {
       const vm = this;
@@ -155,25 +155,37 @@
       updateName (e) {
         this.model.changeName(e.target.value);
         let model = this.model;
-        console.log(model);
+        // console.log(model);
         let rid = this.model.reference_id;
         let pid = this.model.projectId;
         let url = "/api/asset/update/"+rid+"/of/"+pid;
         postData(this,url,{"name":e.target.value},()=>{
-          // this.$emit('fetchData');
+          this.$emit('fetchData');
         });
       },
 
       delNode () {
         const vm = this
         if (window.confirm('Are you sure?')) {
-          vm.model.remove()
+
           let rid = this.model.reference_id;
           let pid = this.model.projectId;
+
+          let children = vm.model.children;
+          console.log(children)
+
+          let result=[rid];
+          if(children != null){
+            for(let i=0;i<children.length;i++){
+              result.push(children.reference_id);
+            }
+          }
+          vm.model.remove();
           let url = "/api/asset/delete/"+rid+"/of/"+pid;
-          postDate(this,url,vm.model,()=>{
+          postData(this,url,result,()=>{
 
           })
+
         }
 
 
@@ -192,7 +204,8 @@
       },
 
       toggle() {
-        if (this.isLeaf) {
+        console.log(this.model);
+        if (this.model.isLeaf ==false) {
           this.expanded = !this.expanded
         }
       },
@@ -215,32 +228,37 @@
       },
 
       addChild(isLeaf) {
-        var node = new TreeNode(this.createItem)
-        console.log(node);
-        this.model.addChildren(node, true);
+        console.log(this.model)
+        let model = this.model;
 
-        console.log(this.model.projectId);
-
-        // for()
         const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName;
         let createDate = new Date().getTime();
         this.expanded = true;
-        let pid = this.model.reference_id;
-        if(pid == "root"){
-          pid=null;
+        let reference_id = model.reference_id;
+        let parent;
+        if(model.reference_id == "root"){
+          parent=null;
+        }else{
+          parent = reference_id;
         }
+        console.log(parent);
+
         this.createItem = {
           "name": name,
           "createDate":createDate,
-          "parent": pid,
+          "projectId": model.projectId,
+          "parent": parent,
           "isLeaf": isLeaf,
           "status": "todo",
-          "children": [],
-          "startDate":0,
-          "dueDate":0,
-        }
+          "startDateUTC":"",
+          "dueDateUTC":"",
+          "checked":false,
 
-        let url = "/api/asset/create/"+this.model.projectId;
+        }
+        var node = new TreeNode(this.createItem)
+        this.model.addChildren(node, true);
+
+        let url = "/api/asset/create/"+ model.projectId;
 
         postData(this,url,this.createItem,(data)=>{
           console.log(data)

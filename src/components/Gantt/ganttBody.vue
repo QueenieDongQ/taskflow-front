@@ -9,23 +9,24 @@
 // import './lib/v.4.1/dhtmlxgantt_marker'
 // import './lib/v.4.1/dhtmlxgantt_tooltip'
 
+
 import './lib/v.4.2/dhtmlxgantt.css'
 import gantt from './lib/v.4.2/dhtmlxgantt'
 import './lib/v.4.2/dhtmlxgantt_marker'
 import './lib/v.4.2/dhtmlxgantt_tooltip'
-
 import './lib/lang/locale_cn'
 import './lib/dhtmlxgantt_marker'
 import './lib/dhtmlxgantt_tooltip'
 import './lib/override_gantt.less'
 
-import { animationScroll } from 'utils/animationScroll'
-import { $$, addClass, removeClass, on } from 'utils/dom'
+import { animationScroll } from '../../utils/animationScroll'
+import { $$, addClass, removeClass, on } from '../../utils/dom'
 
 import moment from 'moment'
 import _ from 'lodash'
 
 import testGanttData from './ganttData'
+import testData from './data'
 // const gantt = window.gantt
 
 export default {
@@ -80,8 +81,13 @@ export default {
     },
     computed: {
         filterGanttData () {
-            if (testGanttData) return testGanttData
-
+            // if (testGanttData) return testGanttData
+            // if(testData) return testData
+            if(this.ganttData){
+              // console.log(JSON.stringify(this.ganttData))
+              // console.log("ganttdata")
+              return JSON.parse(JSON.stringify(this.ganttData));
+            }
             // 处理看板
             const Colors = [
                 '',
@@ -94,101 +100,7 @@ export default {
                 '#a5a5a7'
             ]
 
-            const {
-                kanbanList,
-                kanbankbcList,
-                kbcList,
-                kbcTaskList,
-                taskList: taskLists,
-                kanbanId
-            } = this
 
-            const kanban = kanbanList[kanbanId]
-            const kanbankbcs = kanbankbcList[kanbanId]
-
-            if (!kanban || !Object.keys(kanbankbcList).length
-                || !kanbankbcs || !Object.keys(taskLists).length) {
-                return {
-                    data: []
-                }
-            }
-
-            if (!kanban) {
-                return {
-                    data: []
-                }
-            }
-
-            const kanbanlist = {
-                id: kanban.id,
-                text: kanban.name,
-                // start_date: this.getStartDate(value.start_date),
-                // duration: this.getDuration(value.start_date, value.due_date),
-                progress: 0,
-                open: true,
-                type: 'project',
-            }
-
-            if (!kanbankbcs) {
-                return {
-                    data: [kanbanlist]
-                }
-            }
-
-            const kbctasklist = kanbankbcs.reduce((acc, kbcid) => {
-                const kanbanColumn = kbcList[kbcid]
-                const kbcTasks = kbcTaskList[kbcid]
-
-                if (!kanbanColumn) return kanbanlist
-                const kbclist = {
-                    id: kanbanColumn.kbc.id,
-                    text: kanbanColumn.kbc.name,
-                    parent: kanbanColumn.kbc.kanbanId,
-                    type: 'tasklist',
-                    open: true,
-                }
-
-                if (!kbcTasks || !Object.keys(taskLists).length) {
-                    acc.push(kbclist)
-                    return acc
-                }
-
-                const tasklist = kbcTasks.map(taskid => {
-                    const task = taskLists[taskid]
-                    const noStartDue = !task.startDate && !task.dueDate
-
-                    return {
-                        id: task.id,
-                        projectId: task.projectId,
-                        text: task.name,
-                        startDate: task.startDate,
-                        dueDate: task.dueDate,
-                        start_date: noStartDue
-                            ? moment(this.startDate).startOf('day').toDate()
-                            : this.getStartDate(task.startDate, task.dueDate),
-                        duration: noStartDue ? 366 : this.getDuration(
-                            task.startDate,
-                            task.dueDate),
-                        startDueStatus: this.getNoStartDueDateIndicator(
-                            task.startDate,
-                            task.dueDate),
-                        type: 'task',
-                        status: this.getTaskStatus(task.startDate, task.dueDate, task.done),
-                        progress: 0,
-                        parent: kbcid,
-                        label: Colors[task.label],
-                        real_start_date: moment(task.startDate).toDate(),
-                        real_due_date: moment(task.dueDate).toDate(),
-                        deleted: task.deleted
-                    }
-                })
-                acc.push(kbclist)
-                return acc.concat(tasklist)
-            }, [])
-
-            return {
-                data: [kanbanlist, ...kbctasklist]
-            }
         },
     },
     watch: {
@@ -396,7 +308,7 @@ export default {
             gantt.config.drag_links = false
             gantt.config.details_on_dblclick = false
             // 只读模式
-            // gantt.config.readonly = true
+            gantt.config.readonly = true
             // 拖拉任务
             // gantt.config.order_branch = true
             // gantt.config.order_branch_free = true
@@ -416,41 +328,41 @@ export default {
 
             gantt.templates.grid_row_class = (start, end, task) => {
                 switch (task.type) {
-                    case 'project': return 'gantt_grid_project'
-                    case 'tasklist': return 'gantt_grid_tasklist'
+                    case 'project': return 'gantt_grid_project';
+                    case 'tasklist': return 'gantt_grid_tasklist';
                     default:
-                        return false
+                        return false;
                 }
-            }
+            };
 
-            gantt.templates.grid_folder = (item) => ''
-            gantt.templates.task_row_class = (start, end, task) => 'gantt_grid_row'
-            gantt.templates.grid_file = (item) => (`<div class="gantt_label" style="background: ${item.label}"></div>`)
+            gantt.templates.grid_folder = (item) => '';
+            gantt.templates.task_row_class = (start, end, task) => 'gantt_grid_row';
+            gantt.templates.grid_file = (item) => (`<div class="gantt_label" style="background: ${item.label}"></div>`);
             gantt.templates.task_cell_class = (item, date) => {
                 if (date.getDay() === 6 || date.getDay() === 0) {
-                    return 'weekend'
+                    return 'weekend';
                 }
-                return false
-            }
-            gantt.templates.scale_cell_class = (date) => 'main_scale'
+                return false;
+            };
+            gantt.templates.scale_cell_class = (date) => 'main_scale';
             gantt.templates.scale_row_class = (scale) => {
                 switch (scale.unit) {
-                    case 'day': return 'day_scale'
-                    case 'month': return 'month_scale'
-                    default: return 'week_scale'
+                    case 'day': return 'day_scale';
+                    case 'month': return 'month_scale';
+                    default: return 'week_scale';
                 }
             }
             gantt.ignore_time = (date) => {
                 if (date.getDay() === 0 || date.getDay() === 6) {
-                    return this.hideWeekend
+                    return this.hideWeekend;
                 }
-                return false
+                return false;
             }
 
             gantt.templates.grid_open = (item) => {
-                const arrow = item.$open ? 'el-icon-arrow-down' : 'el-icon-arrow-right'
-                const status = item.$open ? 'close' : 'open'
-                return (`<div class="gantt_tree_icon gantt_${status}"><i class="${arrow}"></i></div>`)
+                const arrow = item.$open ? 'el-icon-arrow-down' : 'el-icon-arrow-right';
+                const status = item.$open ? 'close' : 'open';
+                return (`<div class="gantt_tree_icon gantt_${status}"><i class="${arrow}"></i></div>`);
             }
             gantt.templates.task_text = (start, end, task) => {
                 let text = ''
@@ -618,9 +530,9 @@ export default {
         },
 
         updateGanttTaskById (task) {
-            const ganttTask = gantt.getTask(task.id)
-            if (!ganttTask) return
-            Object.assign(ganttTask, task)
+            const ganttTask = gantt.getTask(task.id);
+            if (!ganttTask) return;
+            Object.assign(ganttTask, task);
             // ganttTask.text = task.text
             // ganttTask.duration = task.duration
             // ganttTask.status = task.status
@@ -629,11 +541,11 @@ export default {
             // .add(task.duration, 'days').toDate()
             // ganttTask.startDueStatus = task.startDueStatus
             // ganttTask.label = task.label
-            gantt.updateTask(task.id)
+            gantt.updateTask(task.id);
         },
 
         onShowTaskById (taskId) {
-            console.log('打开任务')
+            console.log('打开任务');
             this.$router.push({
                 query: {
                     show: `/task/${taskId}`
@@ -643,15 +555,15 @@ export default {
     },
     mounted () {
         this.$nextTick(() => {
-            this.componentDidMount()
+            this.componentDidMount();
         })
     },
     beforeDestroy () {
-        this.ganttEvents().destroy()
+        this.ganttEvents().destroy();
     },
     destroyed () {
         // window.gantt = null
-        const ganttEvents = this.ganttEvents()
+        const ganttEvents = this.ganttEvents();
         ganttEvents.destroy()
     }
 }

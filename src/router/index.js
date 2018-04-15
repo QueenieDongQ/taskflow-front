@@ -7,7 +7,7 @@ import AdminUser from '@/components/Admin/AdminUser'
 import myTask from '@/components/Task/myTask'
 import AllProjects from '@/components/Task/AllProjects'
 
-import Gantt from '@/components/Task/myGantt'
+import myGantt from '@/components/Task/myGantt'
 
 Vue.use(Router)
 
@@ -38,9 +38,10 @@ export default new Router({
       props: true
     },
     {
-      path:'/mytasks/gantt',
+      path:'/gantt/:projectId',
       name:'gantt',
-      component:Gantt,
+      component:myGantt,
+      props:true
     }
 
   ]

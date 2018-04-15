@@ -5,19 +5,21 @@
                   :onToday="onToday"></gantt-header>
     <gantt-body :startDate="ganttStart"
                 :endDate="ganttEnd"
-                :showTaskId="showTaskId"></gantt-body>
+                :showTaskId="showTaskId"
+                :ganttData="ganttData"></gantt-body>
   </div>
+
 </template>
+
 <script>
-  import ganttHeader from '/Gantt/ganttHeader.vue'
-  import ganttBody from '/Gantt/ganttBody'
-  import { animationScroll } from '/Gantt/utils/animationScroll'
-  import { $$ } from '@components/Gantt/utils/dom'
-
+  import ganttHeader from '../Gantt/ganttHeader'
+  import ganttBody from '../Gantt/ganttBody'
+  import { animationScroll } from '../../utils/animationScroll'
+  import { $$ } from '../../utils/dom'
   import moment from 'moment'
-
   export default {
-    name: 'mygantt',
+    name: 'gantt',
+    props:['projectId'],
     components: {
       ganttHeader,
       ganttBody,
@@ -29,6 +31,7 @@
         T_token: 0,
         timelineSetting: null,
         loading: true,
+        ganttData:{}
       }
     },
     computed: {
@@ -41,7 +44,115 @@
       initGantt () {
         // 从后端获取数据
         console.log('从后端获取数据')
+        let url = "/api/project/involved/"+this.projectId+"?assets=1";
+        let allData ={};
+        allData.data=[];
+        allData.data.push({
+          "id": this.projectId,
+          "text": "项目",
+          "progress": 0,
+          "open": true,
+          "type": "project"
+        }),
+        getData(this,url,(data)=>{
+          let tasks = data.assets;
+
+          if(tasks.length > 0){
+            for( let index =0 ; index < tasks.length ; index++){
+              let item = tasks[index]
+
+              //找到第一层task
+              if(item.parent == null) {
+
+                // console.log(item.reference_id)
+                let a = {
+                  "id": "tasklist"+item.reference_id,
+                  "text": item.name,
+                  "parent": this.projectId,
+                  "type": 'tasklist',
+                  "open": true,
+                }
+                allData.data.push(a)
+                //插入第一层task转换 --为了显示该事件的时间
+                allData.data.push({
+                  "id": item.reference_id,
+                  "projectId": this.projectId,
+                  "text": item.name,
+                  "startDate": (item.startDateUTC !="") ? new Date(item.startDateUTC): "",
+                  "dueDate": (item.dueDateUTC !="") ? new Date(item.dueDateUTC): "",
+                  "start_date": (item.startDateUTC =="")? moment(this.startDate).startOf('day').toDate()
+                    : this.getStartDate(item.startDateUTC, item.dueDateUTC),
+                  "duration": (item.startDateUTC =="") ? 366 : this.getDuration(
+                    item.startDateUTC,
+                    item.dueDateUTC),
+                  "startDueStatus": "",
+                  "type": "task",
+                  "status": "progress",
+                  "progress": 0,
+                  "parent": a.id,
+                  "real_start_date": "",
+                  "real_due_date": "",
+                  "label":'#89cc76',
+                  "deleted": false
+                })
+
+                //找到该task子目录
+                for(let i=0;i<tasks.length;i++){
+                  let task = tasks[i];
+                  if(task.parent != item.reference_id){
+
+                    continue;
+
+                  }else{
+                    console.log(item.reference_id)
+                    let b = {
+                      "id": task.reference_id,
+                      "projectId": this.projectId,
+                      "text": task.name,
+                      "startDate": (task.startDateUTC !="") ? new Date(task.startDateUTC): "",
+                      "dueDate": (task.dueDateUTC !="") ? new Date(task.dueDateUTC): "",
+                      "start_date": (task.startDateUTC =="")? moment(this.startDate).startOf('day').toDate()
+                : this.getStartDate(task.startDateUTC, task.dueDateUTC),
+                      "duration": (task.startDateUTC =="") ? 366 : this.getDuration(
+                              task.startDateUTC,
+                              task.dueDateUTC),
+                      "startDueStatus": "",
+                      "type": "task",
+                      "status": "progress",
+                      "progress": 0,
+                      "parent": a.id,
+                      "real_start_date": "",
+                      "real_due_date": "",
+                      "deleted": false
+                    }
+                    console.log(b);
+                    allData.data.push(b)
+                    console.log(allData);
+                  }
+                }
+              }
+            }
+          }
+        })
+        // console.log(allData)
+        this.ganttData = allData
       },
+      getStartDate (startDateUTC, dueDateUTC) {
+        if (startDateUTC) {
+          return moment(startDateUTC).format('DD-MM-YYYY')
+        } else if (dueDateUTC) {
+          return moment(dueDateUTC).format('DD-MM-YYYY')
+        }
+        return null
+      },
+      getDuration (startDate, dueDate) {
+        if (!startDate || !dueDate) return 1
+        // const dateOffset = moment(dueDate).hour() === 0 ? 0 : 1
+        const dateOffset = 1
+        const duration = moment(moment(dueDate).startOf('day')).diff(moment(startDate).startOf('day'), 'days') + dateOffset
+        return duration || 1
+      },
+
       getGanttDate (num) {
         const ganttStart = new Date()
         const ganttEnd = new Date()
@@ -61,17 +172,14 @@
           end
         }
       },
-
       onPrevYear () {
         this.T_token += 1
         this.getGanttDate(this.T_token)
       },
-
       onNextYear () {
         this.T_token -= 1
         this.getGanttDate(this.T_token)
       },
-
       onPrev () {
         const ganttScreenWidth = $$('.gantt_task')[0].clientWidth
         const currentPosition = $$('.gantt_task')[0].scrollLeft
@@ -81,7 +189,6 @@
           this.onPrevYear()
         }
       },
-
       onNext () {
         const ganttDataWidth = $$('.gantt_data_area')[0].clientWidth
         const ganttScreenWidth = $$('.gantt_task')[0].clientWidth
@@ -92,11 +199,10 @@
           this.onNextYear()
         }
       },
-
       onToday () {
         if (this.ganttStart && this.ganttEnd) {
           if (moment().isBetween(this.ganttStart,
-              this.ganttEnd)) {
+            this.ganttEnd)) {
             const todayPosition = $$('.today')[0].offsetLeft
             const screenOffset = 180
             animationScroll({ end: todayPosition - screenOffset, type: 'scrollLeft', tagName: 'gantt_task', rate: 6 })
@@ -118,3 +224,12 @@
     }
   }
 </script>
+<style>
+
+  .gantt-container{
+    width: 100%;
+  }
+  .gantt_task{
+    width: 100%;
+  }
+</style>

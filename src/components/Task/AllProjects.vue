@@ -89,299 +89,311 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-
-        <v-dialog v-model="editedShow" max-width="500px"
+        <v-dialog v-model="editedShow"
                   transition="dialog-bottom-transition"
                   :overlay="false"
-                  scrollable>
-
-          <v-card tile id="leaf_card" justify-center text-xs-center>
-
-            <v-toolbar card dark color="primary">
-              <v-btn icon @click.native="editedShow = false" dark>
-                <v-icon>close</v-icon>
-              </v-btn>
-              <v-toolbar-title>
-                <v-text-field class="edit_data" v-model="editedItem.name" :disabled="disable" style="font-size: 20px;"/>
-              </v-toolbar-title>
-              <v-spacer/>
-              <v-toolbar-items>
-                  <v-btn icon @click=" disable = !disable " v-if="disable"><i class="material-icons" >edit</i></v-btn>
-                  <v-btn icon  @click="onSave" v-if="!disable"><i class="material-icons">save</i></v-btn>
-                  <v-menu bottom right offset-y>
-                    <v-btn slot="activator" dark icon>
-                      <v-icon>more_vert</v-icon>
-                    </v-btn>
-                    <v-list>
-                      <v-list-tile @click="">
-                        <v-list-tile-title>Change Owner</v-list-tile-title>
-                      </v-list-tile>
-                      <v-list-tile @click="deleteProject(editedItem)">
-                        <v-list-tile-title>Delete</v-list-tile-title>
-                      </v-list-tile>
-                    </v-list>
-                  </v-menu>
-              </v-toolbar-items>
-            </v-toolbar>
-
-            <v-card-text>
-              <v-container>
-                  <v-subheader>Progress:
-                    <v-progress-linear
-                    :value="progress_value"
-                    height="7"
-                    color="success"
-                    />
-                    {{progress_value}}%
-                  </v-subheader>
-
-
-                  <v-layout row wrap>
-                    <v-flex xs3>
-                      <v-subheader >Start
-                        <v-menu
-                          transition="slide-x-transition"
-                          bottom
-                          right
-                          :disabled="disable"
-                        >
-                          <v-btn icon slot="activator">
-                            <i class="material-icons">access_time</i>
-                          </v-btn>
-                          <v-date-picker v-model="editedItem.startDate" no-title scrollable/>
-                        </v-menu>
-                      </v-subheader>
-                    </v-flex>
-
-                    <v-flex xs3>
-                      <v-chip v-if="editedItem.startDate!=null" color="success">{{editedItem.startDate}}</v-chip>
-                    </v-flex>
-
-                    <v-flex xs3>
-                      <v-subheader >Due
-                        <v-menu
-                          transition="slide-x-transition"
-                          bottom
-                          right
-                          :disabled="disable"
-                        >
-                          <v-btn icon slot="activator" >
-                            <i class="material-icons">access_time</i>
-                          </v-btn>
-                          <v-date-picker v-model="editedItem.dueDate" no-title scrollable/>
-                        </v-menu>
-                      </v-subheader>
-                    </v-flex>
-
-                    <v-flex xs3>
-                      <v-chip v-if="editedItem.dueDate!=null" color="red" class="time">{{editedItem.dueDate}}</v-chip>
-                    </v-flex>
-                  </v-layout>
-
-
-
-                  <v-layout row wrap>
-                    <v-flex xs2>
-                      <v-subheader>Member</v-subheader>
-                    </v-flex>
-                    <v-flex xs10>
-                      <v-layout row wrap>
-                        <v-flex xs2 v-for="member in  editedItem.members" :key="member._id">
-                          <div class="text-xs-center">
-                            <v-chip>
-                              <v-avatar>
-                                <img :src="member.avater">
-                              </v-avatar>
-                              {{member.name}}
-                            </v-chip>
-                          </div>
-                        </v-flex>
-                        <v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow"> <i class="material-icons">group_add</i></v-btn>
-                      </v-layout>
-                    </v-flex>
-                    <v-dialog v-model="addMemberShow" max-width="500px" height="400px">
-                      <v-card>
-                        <v-card-title>
-                          Add collaborators
-                        </v-card-title>
-                        <v-card-text>
-                          <v-container fluid>
-                            <v-layout row wrap>
-                              <v-flex xs12>
-                                <v-select
-                                  label="Select"
-                                  :items="people"
-                                  v-model="addingMembers"
-                                  item-text="name"
-                                  multiple
-                                  chips
-                                  max-height="300px"
-                                  autocomplete>
-
-                                <template slot="selection" slot-scope="data">
-                                  <v-chip
-                                    close
-                                    @input="data.parent.selectItem(data.item)"
-                                    :selected="data.selected"
-                                    class="chip--select-multi"
-                                    :key="JSON.stringify(data.item._id)"
-                                  >
-                                    <v-avatar>
-                                      <img :src="data.item.avatar">
-                                    </v-avatar>
-                                    {{ data.item.name }}
-                                  </v-chip>
-                                </template>
-                                <template slot="item" slot-scope="data" >
-                                  <template v-if="typeof data.item !== 'object'">
-                                    <v-list-tile-content v-text="data.item"></v-list-tile-content>
-                                  </template>
-                                  <template v-else>
-                                    <v-list-tile-avatar>
-                                      <img :src="data.item.avatar">
-                                    </v-list-tile-avatar>
-                                    <v-list-tile-content>
-                                      <v-list-tile-title v-html="data.item.name"></v-list-tile-title>
-                                    </v-list-tile-content>
-                                  </template>
-                                </template>
-                              </v-select>
-
-                              </v-flex>
-                              <v-flex xs12>
-                                <v-expansion-panel class="elevation-0" >
-                                  <v-expansion-panel-content >
-                                    <div slot="header">Advanced</div>
-                                    <v-card>
-                                      <v-list>
-                                        <v-list-tile v-for="member in editedItem.members" :key="member._id">
-                                          <v-list-tile-avatar>
-                                            <img :src="member.avatar">
-                                          </v-list-tile-avatar>
-
-                                          <v-list-tile-title>{{member.name}}</v-list-tile-title>
-                                          <v-list-tile-action>
-                                            <v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>
-                                          </v-list-tile-action>
-                                        </v-list-tile>
-                                      </v-list>
-                                    </v-card>
-                                  </v-expansion-panel-content>
-                                </v-expansion-panel>
-                              </v-flex>
-                            </v-layout>
-                          </v-container>
-                        </v-card-text>
-                        <v-card-actions>
-                          <v-btn color="primary" flat @click.stop="addMemberShow=false">Close</v-btn>
-                          <v-spacer/>
-                          <v-btn color="primary" flat @click="addMembers">Send</v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
-
-                    <v-flex xs2>
-                      <v-subheader>Labels</v-subheader>
-                    </v-flex>
-                    <v-flex xs10>
-                      <v-layout row wrap>
-                        <v-flex xs2 text-xs-center v-for="label in selectedLabels" :key="label.id" v-if="label.selected =true">
-
-                            <v-chip :color="label.color"
-                                          @input="label.selected =false">{{label.name}}</v-chip>
-                        </v-flex>
-
-                        <v-menu offset-y :close-on-content-click="false" >
-                          <v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>
-                          <v-card style="width:300px;">
-                            <v-subheader>Select Labels</v-subheader>
-
-                              <v-flex xs12 v-for="(label,index) in allLabels" :key="index">
-                                <v-checkbox
-                                  :label="label.name"
-                                  v-model="selectedLabels"
-                                  :color="label.color"
-                                  :checked="label.selected"
-                                  @click.native="label.selected = !label.selected"
-                                  :value="label"
-                                  hide-details
-                                />
-
-                              </v-flex>
-                              <v-flex xs12>
-                                <v-btn icon>add</v-btn>
-                              </v-flex>
-                          </v-card>
-                        </v-menu>
-                      </v-layout>
-                    </v-flex>
-                  </v-layout>
-              <v-divider class="divide"/>
-
-              <v-layout row wrap>
-                <v-flex xs4><v-subheader>Project Code</v-subheader></v-flex>
-                <v-flex xs8>
-                  <v-text-field v-model="editedItem.code" :disabled="disable"/>
-                </v-flex>
-                <v-flex xs4><v-subheader>Client</v-subheader></v-flex>
-                <v-flex xs8>
-                  <v-text-field v-model="editedItem.client" :disabled="disable"/>
-                </v-flex>
-                <v-flex xs4><v-subheader>Part Number</v-subheader></v-flex>
-                <v-flex xs8>
-                  <v-text-field
-                    name="partNumber"
-                    v-model="editedItem.partNumber"
-                    multi-line
-                    :disabled="disable"
-                  />
-                </v-flex>
-              </v-layout>
-              <v-divider class="divide"/>
-
-               <v-layout row wrap>
-                  <v-flex xs12>
-                    <v-subheader>Description</v-subheader>
-
-                      <v-layout row text-center>
-                        <v-flex xs12>
-                          <v-text-field
-                            name="description"
-                            v-model="editedItem.description"
-                            multi-line
-                            textarea
-
-                            style="width: 80%"
-                            :disabled="disable"
-                          />
-                        </v-flex>
-                      </v-layout>
-                  </v-flex>
-               </v-layout>
-                <v-divider></v-divider>
-                <v-layout>
-                <v-flex xs12>
-                  <v-subheader>Checklist</v-subheader>
-                  <v-divider class="divide"/>
-
-                  <v-subheader>Comments History</v-subheader>
-                  <v-divider class="divide"/>
-                </v-flex>
-
-              </v-layout>
-              </v-container>
-            </v-card-text>
-
-            <!--<v-footer>-->
-              <!--<v-layout row>-->
-                <!--<v-spacer/>-->
-                <!--<v-flex xs9><v-text-field style="" label="Comment"/></v-flex>-->
-                <!--<v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>-->
-              <!--</v-layout>-->
-            <!--</v-footer>-->
-          </v-card>
+                  max-width="500px"
+                  scrollable class="editDialog">
+          <card target="project"
+                :editedItem = "editedItem"
+                :editedShow = "editedShow"
+                :users="users"
+                v-on:changeShow="closeDialog"
+                @refreshData="fetchData"></card>
 
         </v-dialog>
+        <!--<v-dialog v-model="editedShow" max-width="500px"-->
+                  <!--transition="dialog-bottom-transition"-->
+                  <!--:overlay="false"-->
+                  <!--scrollable>-->
+
+          <!--<v-card tile id="leaf_card" justify-center text-xs-center>-->
+
+            <!--<v-toolbar card dark color="primary">-->
+              <!--<v-btn icon @click.native="editedShow = false" dark>-->
+                <!--<v-icon>close</v-icon>-->
+              <!--</v-btn>-->
+              <!--<v-toolbar-title>-->
+                <!--<v-text-field class="edit_data" v-model="editedItem.name" :disabled="disable" style="font-size: 20px;"/>-->
+              <!--</v-toolbar-title>-->
+              <!--<v-spacer/>-->
+              <!--<v-toolbar-items>-->
+                  <!--<v-btn icon @click=" disable = !disable " v-if="disable"><i class="material-icons" >edit</i></v-btn>-->
+                  <!--<v-btn icon  @click="onSave" v-if="!disable"><i class="material-icons">save</i></v-btn>-->
+                  <!--<v-menu bottom right offset-y>-->
+                    <!--<v-btn slot="activator" dark icon>-->
+                      <!--<v-icon>more_vert</v-icon>-->
+                    <!--</v-btn>-->
+                    <!--<v-list>-->
+                      <!--<v-list-tile @click="">-->
+                        <!--<v-list-tile-title>Change Owner</v-list-tile-title>-->
+                      <!--</v-list-tile>-->
+                      <!--<v-list-tile @click="deleteProject(editedItem)">-->
+                        <!--<v-list-tile-title>Delete</v-list-tile-title>-->
+                      <!--</v-list-tile>-->
+                    <!--</v-list>-->
+                  <!--</v-menu>-->
+              <!--</v-toolbar-items>-->
+            <!--</v-toolbar>-->
+
+            <!--<v-card-text>-->
+              <!--<v-container>-->
+                  <!--<v-subheader>Progress:-->
+                    <!--<v-progress-linear-->
+                    <!--:value="progress_value"-->
+                    <!--height="7"-->
+                    <!--color="success"-->
+                    <!--/>-->
+                    <!--{{progress_value}}%-->
+                  <!--</v-subheader>-->
+
+
+                  <!--<v-layout row wrap>-->
+                    <!--<v-flex xs3>-->
+                      <!--<v-subheader >Start-->
+                        <!--<v-menu-->
+                          <!--transition="slide-x-transition"-->
+                          <!--bottom-->
+                          <!--right-->
+                          <!--:disabled="disable"-->
+                        <!--&gt;-->
+                          <!--<v-btn icon slot="activator">-->
+                            <!--<i class="material-icons">access_time</i>-->
+                          <!--</v-btn>-->
+                          <!--<v-date-picker v-model="editedItem.startDate" no-title scrollable/>-->
+                        <!--</v-menu>-->
+                      <!--</v-subheader>-->
+                    <!--</v-flex>-->
+
+                    <!--<v-flex xs3>-->
+                      <!--<v-chip v-if="editedItem.startDate!=null" color="success">{{editedItem.startDate}}</v-chip>-->
+                    <!--</v-flex>-->
+
+                    <!--<v-flex xs3>-->
+                      <!--<v-subheader >Due-->
+                        <!--<v-menu-->
+                          <!--transition="slide-x-transition"-->
+                          <!--bottom-->
+                          <!--right-->
+                          <!--:disabled="disable"-->
+                        <!--&gt;-->
+                          <!--<v-btn icon slot="activator" >-->
+                            <!--<i class="material-icons">access_time</i>-->
+                          <!--</v-btn>-->
+                          <!--<v-date-picker v-model="editedItem.dueDate" no-title scrollable/>-->
+                        <!--</v-menu>-->
+                      <!--</v-subheader>-->
+                    <!--</v-flex>-->
+
+                    <!--<v-flex xs3>-->
+                      <!--<v-chip v-if="editedItem.dueDate!=null" color="red" class="time">{{editedItem.dueDate}}</v-chip>-->
+                    <!--</v-flex>-->
+                  <!--</v-layout>-->
+
+
+
+                  <!--<v-layout row wrap>-->
+                    <!--<v-flex xs2>-->
+                      <!--<v-subheader>Member</v-subheader>-->
+                    <!--</v-flex>-->
+                    <!--<v-flex xs10>-->
+                      <!--<v-layout row wrap>-->
+                        <!--<v-flex xs2 v-for="member in  editedItem.members" :key="member._id">-->
+                          <!--<div class="text-xs-center">-->
+                            <!--<v-chip>-->
+                              <!--<v-avatar>-->
+                                <!--<img :src="member.avater">-->
+                              <!--</v-avatar>-->
+                              <!--{{member.name}}-->
+                            <!--</v-chip>-->
+                          <!--</div>-->
+                        <!--</v-flex>-->
+                        <!--<v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow"> <i class="material-icons">group_add</i></v-btn>-->
+                      <!--</v-layout>-->
+                    <!--</v-flex>-->
+                    <!--<v-dialog v-model="addMemberShow" max-width="500px" height="400px">-->
+                      <!--<v-card>-->
+                        <!--<v-card-title>-->
+                          <!--Add collaborators-->
+                        <!--</v-card-title>-->
+                        <!--<v-card-text>-->
+                          <!--<v-container fluid>-->
+                            <!--<v-layout row wrap>-->
+                              <!--<v-flex xs12>-->
+                                <!--<v-select-->
+                                  <!--label="Select"-->
+                                  <!--:items="people"-->
+                                  <!--v-model="addingMembers"-->
+                                  <!--item-text="name"-->
+                                  <!--multiple-->
+                                  <!--chips-->
+                                  <!--max-height="300px"-->
+                                  <!--autocomplete>-->
+
+                                <!--<template slot="selection" slot-scope="data">-->
+                                  <!--<v-chip-->
+                                    <!--close-->
+                                    <!--@input="data.parent.selectItem(data.item)"-->
+                                    <!--:selected="data.selected"-->
+                                    <!--class="chip&#45;&#45;select-multi"-->
+                                    <!--:key="JSON.stringify(data.item._id)"-->
+                                  <!--&gt;-->
+                                    <!--<v-avatar>-->
+                                      <!--<img :src="data.item.avatar">-->
+                                    <!--</v-avatar>-->
+                                    <!--{{ data.item.name }}-->
+                                  <!--</v-chip>-->
+                                <!--</template>-->
+                                <!--<template slot="item" slot-scope="data" >-->
+                                  <!--<template v-if="typeof data.item !== 'object'">-->
+                                    <!--<v-list-tile-content v-text="data.item"></v-list-tile-content>-->
+                                  <!--</template>-->
+                                  <!--<template v-else>-->
+                                    <!--<v-list-tile-avatar>-->
+                                      <!--<img :src="data.item.avatar">-->
+                                    <!--</v-list-tile-avatar>-->
+                                    <!--<v-list-tile-content>-->
+                                      <!--<v-list-tile-title v-html="data.item.name"></v-list-tile-title>-->
+                                    <!--</v-list-tile-content>-->
+                                  <!--</template>-->
+                                <!--</template>-->
+                              <!--</v-select>-->
+
+                              <!--</v-flex>-->
+                              <!--<v-flex xs12>-->
+                                <!--<v-expansion-panel class="elevation-0" >-->
+                                  <!--<v-expansion-panel-content >-->
+                                    <!--<div slot="header">Advanced</div>-->
+                                    <!--<v-card>-->
+                                      <!--<v-list>-->
+                                        <!--<v-list-tile v-for="member in editedItem.members" :key="member._id">-->
+                                          <!--<v-list-tile-avatar>-->
+                                            <!--<img :src="member.avatar">-->
+                                          <!--</v-list-tile-avatar>-->
+
+                                          <!--<v-list-tile-title>{{member.name}}</v-list-tile-title>-->
+                                          <!--<v-list-tile-action>-->
+                                            <!--<v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>-->
+                                          <!--</v-list-tile-action>-->
+                                        <!--</v-list-tile>-->
+                                      <!--</v-list>-->
+                                    <!--</v-card>-->
+                                  <!--</v-expansion-panel-content>-->
+                                <!--</v-expansion-panel>-->
+                              <!--</v-flex>-->
+                            <!--</v-layout>-->
+                          <!--</v-container>-->
+                        <!--</v-card-text>-->
+                        <!--<v-card-actions>-->
+                          <!--<v-btn color="primary" flat @click.stop="addMemberShow=false">Close</v-btn>-->
+                          <!--<v-spacer/>-->
+                          <!--<v-btn color="primary" flat @click="addMembers">Send</v-btn>-->
+                        <!--</v-card-actions>-->
+                      <!--</v-card>-->
+                    <!--</v-dialog>-->
+
+                    <!--<v-flex xs2>-->
+                      <!--<v-subheader>Labels</v-subheader>-->
+                    <!--</v-flex>-->
+                    <!--<v-flex xs10>-->
+                      <!--<v-layout row wrap>-->
+                        <!--<v-flex xs2 text-xs-center v-for="label in selectedLabels" :key="label.id" v-if="label.selected =true">-->
+
+                            <!--<v-chip :color="label.color"-->
+                                          <!--@input="label.selected =false">{{label.name}}</v-chip>-->
+                        <!--</v-flex>-->
+
+                        <!--<v-menu offset-y :close-on-content-click="false" >-->
+                          <!--<v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>-->
+                          <!--<v-card style="width:300px;">-->
+                            <!--<v-subheader>Select Labels</v-subheader>-->
+
+                              <!--<v-flex xs12 v-for="(label,index) in allLabels" :key="index">-->
+                                <!--<v-checkbox-->
+                                  <!--:label="label.name"-->
+                                  <!--v-model="selectedLabels"-->
+                                  <!--:color="label.color"-->
+                                  <!--:checked="label.selected"-->
+                                  <!--@click.native="label.selected = !label.selected"-->
+                                  <!--:value="label"-->
+                                  <!--hide-details-->
+                                <!--/>-->
+
+                              <!--</v-flex>-->
+                              <!--<v-flex xs12>-->
+                                <!--<v-btn icon>add</v-btn>-->
+                              <!--</v-flex>-->
+                          <!--</v-card>-->
+                        <!--</v-menu>-->
+                      <!--</v-layout>-->
+                    <!--</v-flex>-->
+                  <!--</v-layout>-->
+              <!--<v-divider class="divide"/>-->
+
+              <!--<v-layout row wrap>-->
+                <!--<v-flex xs4><v-subheader>Project Code</v-subheader></v-flex>-->
+                <!--<v-flex xs8>-->
+                  <!--<v-text-field v-model="editedItem.code" :disabled="disable"/>-->
+                <!--</v-flex>-->
+                <!--<v-flex xs4><v-subheader>Client</v-subheader></v-flex>-->
+                <!--<v-flex xs8>-->
+                  <!--<v-text-field v-model="editedItem.client" :disabled="disable"/>-->
+                <!--</v-flex>-->
+                <!--<v-flex xs4><v-subheader>Part Number</v-subheader></v-flex>-->
+                <!--<v-flex xs8>-->
+                  <!--<v-text-field-->
+                    <!--name="partNumber"-->
+                    <!--v-model="editedItem.partNumber"-->
+                    <!--multi-line-->
+                    <!--:disabled="disable"-->
+                  <!--/>-->
+                <!--</v-flex>-->
+              <!--</v-layout>-->
+              <!--<v-divider class="divide"/>-->
+
+               <!--<v-layout row wrap>-->
+                  <!--<v-flex xs12>-->
+                    <!--<v-subheader>Description</v-subheader>-->
+
+                      <!--<v-layout row text-center>-->
+                        <!--<v-flex xs12>-->
+                          <!--<v-text-field-->
+                            <!--name="description"-->
+                            <!--v-model="editedItem.description"-->
+                            <!--multi-line-->
+                            <!--textarea-->
+
+                            <!--style="width: 80%"-->
+                            <!--:disabled="disable"-->
+                          <!--/>-->
+                        <!--</v-flex>-->
+                      <!--</v-layout>-->
+                  <!--</v-flex>-->
+               <!--</v-layout>-->
+                <!--<v-divider></v-divider>-->
+                <!--<v-layout>-->
+                <!--<v-flex xs12>-->
+                  <!--<v-subheader>Checklist</v-subheader>-->
+                  <!--<v-divider class="divide"/>-->
+
+                  <!--<v-subheader>Comments History</v-subheader>-->
+                  <!--<v-divider class="divide"/>-->
+                <!--</v-flex>-->
+
+              <!--</v-layout>-->
+              <!--</v-container>-->
+            <!--</v-card-text>-->
+
+            <!--&lt;!&ndash;<v-footer>&ndash;&gt;-->
+              <!--&lt;!&ndash;<v-layout row>&ndash;&gt;-->
+                <!--&lt;!&ndash;<v-spacer/>&ndash;&gt;-->
+                <!--&lt;!&ndash;<v-flex xs9><v-text-field style="" label="Comment"/></v-flex>&ndash;&gt;-->
+                <!--&lt;!&ndash;<v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>&ndash;&gt;-->
+              <!--&lt;!&ndash;</v-layout>&ndash;&gt;-->
+            <!--&lt;!&ndash;</v-footer>&ndash;&gt;-->
+          <!--</v-card>-->
+
+        <!--</v-dialog>-->
 
       </v-card>
     </v-flex>
@@ -391,11 +403,11 @@
 </template>
 
 <script>
-
+    import Card from '../Kanban/Card'
     export default {
       name: "all-task-lists",
       components:{
-
+        'card':Card
       },
       data(){
 
@@ -445,13 +457,11 @@
           addMemberShow:false,
           selectedMembers: [],
           addingMembers:[],
-          people: [],
+          peolpe: [],
+          users:[],
           labelMenu:true,
           allLabels:[],
           selectedLabels:[],
-
-
-
 
         }
       },
@@ -477,10 +487,11 @@
           getData(this,urlUser,(data)=>{
             //get people data
             this.people = data;
+            this.users = data;
 
             //get projects data
             let urlProject = "/api/project/involved";
-            window.getData(this,urlProject,(data)=>{
+            getData(this,urlProject,(data)=>{
               let items = data;
 
               for(let i = 0 ;i<items.length;i++) {
@@ -490,20 +501,19 @@
 
                 //transfer owner to ownerName
                 let id = items[i].owner;
-                let name = this.searchMemberInfo(id, "name");
+                let name = this.searchUserInfo(id, "name");
                 items[i].ownerName = name;
                 let members = items[i].members;
                 for (let j = 0; j < members.length; j++) {
                   let memberID = members[j];
-                  let memberName = this.searchMemberInfo(memberID, "name");
-                  let avater = this.searchMemberInfo(memberID, "avater");
+                  let memberName = this.searchUserInfo(memberID, "name");
+                  let avater = this.searchUserInfo(memberID, "avater");
                   members[j] = {"_id": memberID, "name": memberName, "avater": avater};
                 }
                 items[i].members = members;
 
               }
               this.items = items;
-
 
               let d = this.items;
               if(callback) {
@@ -526,9 +536,9 @@
           return year+"-"+month+"-"+day;
         },
 
-        searchMemberInfo(id,target){
+        searchUserInfo(id,target){
           let that = this;
-          let people = that.people;
+          let people = that.users;
 
           for(let i=0;i<people.length;i++){
             if(id == people[i]._id){
@@ -543,24 +553,99 @@
         },
 
         editItem (item) {
+          // this.editedIndex = this.items.indexOf(item);
+          // this.editedItem = Object.assign({}, item);
+          //
+          // let owner_id =this.editedItem.owner;
+          //
+          // this.editedItem.ownerName = this.searchMemberInfo(owner_id,"name");
+          // this.editedItem.email = this.searchMemberInfo(owner_id,"email");
+          //
+          // let parent = this.editedItem.reference_id;
+          // let children=[];
+          // // if(parent !=null){
+          // //   children = this.blocks.filter((item)=>{
+          // //     if(item.parent == parent) return item;
+          // //   })
+          // // }else{
+          // //   children =this.blocks.filter((item)=>{
+          // //     if(item.parent == null) return item;
+          // //   })
+          // // }
+          //
+          // this.editedItem.children = children;
+          //
+          // this.allLabels = this.editedItem.labels;
+          // let labels = this.allLabels;
+          // // console.log(labels);
+          // let j=0;
+          // for(let i=0;i<labels.length;i++){
+          //
+          //   if(labels[i].selected == true){
+          //     this.selectedLabels[j]=labels[i];
+          //     j++;
+          //   }
+          // }
+          //
+          // console.log(this.editedItem)
+          // this.editedShow = true;
+
           this.editedIndex = this.items.indexOf(item);
           this.editedItem = Object.assign({}, item);
+
+          let owner_id =this.editedItem.owner;
+
+          this.editedItem.ownerName = this.searchUserInfo(owner_id,"name");
+          this.editedItem.email = this.searchUserInfo(owner_id,"email");
+
+          let parent = this.editedItem.reference_id;
+          // search if exit children task
+          console.log(parent)
+          this.editedItem.children = this.getEditedItemChildren("task",parent);
+
+          // let members =  this.editedItem.members;
+          // this.editedItem.membersInfo = this.getEditedItemMembers(members);
+
+          let labels = this.editedItem.labels;
+          this.editedItem.labelsInfo = this.getEditedItemLabels(labels);
+
           this.editedShow = true;
+          console.log(this.editedItem);
+          console.log("edited")
+        },
+        getEditedItemChildren(target,parent){
+          let children;
+          if(target =="project"){
+            children = this.items.filter((item)=>{
+              if(item.parent == null) return item;
+            })
+          }
 
-          this.allLabels = this.editedItem.labels;
-          let labels = this.allLabels;
+          if(target == "task"){
+            children = this.items.filter((item) => {
+              if (item.parent == parent) return item;
+            })
+          }
+
+          return children;
+        },
+
+        getEditedItemLabels(labels){
           // console.log(labels);
+          let arr =[];
           let j=0;
-          for(let i=0;i<labels.length;i++){
+          if(labels.length>0){
+            for(let i=0;i<labels.length;i++){
 
-            if(labels[i].selected == true){
-              this.selectedLabels[j]=labels[i];
-              j++;
+              if(labels[i].selected == true){
+                arr[j]=labels[i];
+                j++;
+              }
             }
           }
 
+          return arr;
         },
-
         createProject(){
           // let that = this;
           this.project.createDate=new Date().getTime();
@@ -672,7 +757,13 @@
           labels[index].selected = false;
           console.log(labels);
           // this.allLabels = labels;
+        },
+        closeDialog(msg){
+          this.editedShow = msg;
+          console.log(msg)
+          console.log("changeshow")
         }
+
       }
 
     }
