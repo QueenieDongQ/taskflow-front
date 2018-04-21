@@ -1,13 +1,12 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+
 import Userinfo from '@/components/User/Userinfo'
-
 import AdminUser from '@/components/Admin/AdminUser'
-
 import myTask from '@/components/Task/myTask'
 import AllProjects from '@/components/Task/AllProjects'
-
 import myGantt from '@/components/Task/myGantt'
+import Home from '@/components/Task/Home'
 
 Vue.use(Router)
 
@@ -15,6 +14,11 @@ export default new Router({
   routes: [
     {
       path: '/',
+      name: 'Home',
+      component: Home
+    },
+    {
+      path: '/myspace',
       name: 'Userinfo',
       component: Userinfo
     },

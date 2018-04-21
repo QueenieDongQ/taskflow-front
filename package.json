@@ -21,6 +21,7 @@
     "d3-gantt-chart": "^0.2.8",
     "dhtmlx-gantt": "^5.1.0",
     "dragula": "^3.7.2",
+    "echarts": "^4.0.4",
     "es6-promise": "^4.2.4",
     "express": "^4.16.3",
     "express-vue": "^5.2.5",

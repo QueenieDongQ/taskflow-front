@@ -10,7 +10,7 @@
       </v-toolbar-title>
       <v-spacer/>
       <v-toolbar-items>
-        <v-btn icon @click=" disable = !disable " v-if="disable"><i class="material-icons" >edit</i></v-btn>
+        <v-btn icon @click="judgeIsOwner() " v-if="disable"><i class="material-icons" >edit</i></v-btn>
         <v-btn icon  @click="onSave(editedItem)" v-if="!disable"><i class="material-icons">save</i></v-btn>
         <v-menu bottom right offset-y>
           <v-btn slot="activator" dark icon>
@@ -77,7 +77,7 @@
         </v-flex>
 
         <v-flex xs3>
-          <v-chip v-if="editedItem.startDate!=null" color="success">{{editedItem.startDate}}</v-chip>
+          <v-chip color="success" v-if="editedItem.startDate!=null" >{{editedItem.startDate}}</v-chip>
         </v-flex>
 
         <v-flex xs3>
@@ -101,7 +101,7 @@
         </v-flex>
 
         <v-flex xs3>
-          <v-chip v-if="editedItem.dueDate!=null" color="red" class="time">{{editedItem.dueDate}}</v-chip>
+          <v-chip color="red" v-if="editedItem.dueDate!=null" >{{editedItem.dueDate}}</v-chip>
         </v-flex>
       </v-layout>
 
@@ -111,17 +111,26 @@
         </v-flex>
         <v-flex xs10>
           <v-layout row wrap>
-            <v-flex xs2 v-for="member in  editedItem.membersInfo" :key="member._id">
-              <div class="text-xs-center">
-                <v-chip>
-                  <v-avatar>
-                    <img :src="member.avater">
-                  </v-avatar>
-                  {{member.name}}
-                </v-chip>
-              </div>
+            <v-flex xs2>
+              <v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow">
+                <i class="material-icons">group_add</i>
+              </v-btn>
             </v-flex>
-            <v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow"> <i class="material-icons">group_add</i></v-btn>
+            <v-flex 10>
+              <v-layout>
+                <v-flex xs6 sm4 v-for="member in  editedItem.membersInfo" :key="member._id">
+
+                  <v-chip>
+                    <v-avatar>
+                      <img :src="member.avater">
+                    </v-avatar>
+                    {{member.name}}
+                  </v-chip>
+                </v-flex>
+              </v-layout>
+            </v-flex>
+
+
           </v-layout>
         </v-flex>
         <v-dialog v-model="addMemberShow" max-width="500px" height="400px">
@@ -145,10 +154,9 @@
 
                       <template slot="selection" slot-scope="data">
                         <v-chip
-                          close
+
                           @input="data.parent.selectItem(data.item)"
                           :selected="data.selected"
-                          class="chip--select-multi"
                           :key="JSON.stringify(data.item._id)"
                         >
                           <v-avatar>
@@ -176,17 +184,18 @@
                   <v-flex xs12>
                     <v-expansion-panel class="elevation-0" >
                       <v-expansion-panel-content >
-                        <div slot="header">Advanced</div>
+                        <v-spacer/>
+                        <div slot="header"><v-btn flat>Advanced</v-btn></div>
                         <v-card>
                           <v-list>
-                            <v-list-tile v-for="member in editedItem.membersInfo" :key="member._id">
+                            <v-list-tile v-for="(member,index) in editedItem.membersInfo" :key="index">
                               <v-list-tile-avatar>
                                 <img :src="member.avatar">
                               </v-list-tile-avatar>
 
                               <v-list-tile-title>{{member.name}}</v-list-tile-title>
                               <v-list-tile-action>
-                                <v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>
+                                <v-btn icon ripple @click="deleteMember(member,index)"><i class="material-icons" color="red">delete</i></v-btn>
                               </v-list-tile-action>
                             </v-list-tile>
                           </v-list>
@@ -212,31 +221,9 @@
         </v-flex>
         <v-flex xs10>
           <v-layout row wrap>
-            <v-flex xs2 text-xs-center v-for="label in selectedLabels" :key="label.id" v-if="label.selected = true">
-              <v-chip :color="label.color"
-                      @input="label.selected =false">{{label.name}}</v-chip>
+            <v-flex xs12>
+              <v-chip :color="editedItem.labelDetail.color" v-if="editedItem.labelDetail">{{editedItem.labelDetail.name}}</v-chip>
             </v-flex>
-            <v-menu offset-y :close-on-content-click="false" >
-              <v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>
-              <v-card style="width:300px;">
-                <v-subheader>Select Labels</v-subheader>
-
-                <v-flex xs12 v-for="(label,index) in allLabels" :key="index">
-                  <v-checkbox
-                    :label="label.name"
-                    v-model="selectedLabels"
-                    :color="label.color"
-                    :checked="label.selected"
-                    @click.native="label.selected = !label.selected"
-                    :value="label"
-                    hide-details
-                  />
-                </v-flex>
-                <v-flex xs12>
-                  <v-btn icon>add</v-btn>
-                </v-flex>
-              </v-card>
-            </v-menu>
           </v-layout>
         </v-flex>
       </v-layout>
@@ -282,18 +269,20 @@
       </v-layout>
 
 
-      <!--<v-layout row v-if="editedItem.isLeaf">-->
-      <v-layout row>
+      <v-layout row
+                v-if="editedItem.isLeaf==false || target == 'project' "
+                >
         <v-flex xs12>
           <v-subheader>Checklist</v-subheader>
           <v-list-tile avatar v-for="(item, i) in editedItem.children" :key="i">
             <v-list-tile-action>
               <v-checkbox v-model="item.checked"
-                          :value ="item.checked"></v-checkbox>
+                          :value ="item.checked"
+                          :disabled="disable"></v-checkbox>
             </v-list-tile-action>
             <v-list-tile-content>
               <v-list-tile-title>{{item.name}}</v-list-tile-title>
-              <v-list-tile-sub-title>Assign to :{{item.owner}}</v-list-tile-sub-title>
+              <v-list-tile-sub-title>Assign to :{{item.ownerName}}</v-list-tile-sub-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-flex>
@@ -332,18 +321,20 @@
         },
         target:{
           type:String
+        },
+        myInformation:{
+          type:Object
         }
 
       },
       data(){
         return{
-          disable:false,
+          disable:true,
           progress_value:0,
           menu: false,
           addingMembers:[],
           addMemberShow:false,
-          allLabels:[],
-          selectedLabels:[],
+
         }
       },
       computed:{
@@ -361,14 +352,25 @@
           }else{
             return 0;
           }
-        }
+        },
+
       },
       mounted(){
+        // this.getEditedItemChildren(this.target ,this.editedItem )
+        // this.editedItem.children = this.getEditedItemChildren( this.target ,this.editedItem )
 
       },
       methods:{
 
-
+        judgeIsOwner(){
+          console.log(this.myInformation._id )
+          console.log(this.myInformation.name )
+          if(this.myInformation._id !=this.editedItem.owner){
+            return alert("你没有编辑权限");
+          }else{
+            return this.disable =false;
+          }
+        },
         changeOwner(){
 
         },
@@ -381,27 +383,22 @@
             url ="/api/project/"+pid+"/member/add";
           }
 
-          console.log(this.editedItem.membersInfo)
           let membersinfo = that.addingMembers;
 
           //合并两个数组，去重
           let newMembersInfo = this.uniqueArray(this.editedItem.membersInfo.concat(membersinfo),"_id");
-          console.log(newMembersInfo)
-          console.log("newinfo")
+
           this.editedItem.membersInfo = newMembersInfo;
 
-          console.log(this.editedItem.membersInfo )
           let id=[];
           for(let i=0;i<newMembersInfo.length;i++){
             id[i]=newMembersInfo[i]._id;
           }
-          let mem = {
-            "members":id
-          }
-          postData(this,url,mem,()=> {
+         console.log(id);
+          postData(this,url,id,()=> {
+
             this.$emit('refreshData');
 
-            console.log(this.editedItem.membersInfo)
             this.addingMembers =[];
             this.addMemberShow=false;
 
@@ -410,67 +407,99 @@
 
         },
 
-        deleteMember(item){
+        deleteMember(item,index){
           console.log(item);
-          let pid,url;
-          let that = this;
-          if(this.target =="project"){
-            pid = that.editedItem._id
+          let r = confirm("确定删除该成员？");
+          if(!r){
+            return;
+          }else{
+            let pid,url;
+            let that = this;
+
+            pid = that.editedItem._id;
             url ="/api/project/"+pid+"/member/delete";
             let memberID=[item._id];
+            console.log(index)
+            that.editedItem.membersInfo.splice(index,1);
+            console.log(that.editedItem.membersInfo);
+            console.log("members")
             postData(this,url,memberID,()=>{
+
               this.$emit('refreshData');
 
-            });
+            })
           }
-          else if(this.target == "task"){
-            pid = that.editedItem.projectId;
-            let rid = that.editedItem.reference_id;
-
-            url = "/api/asset/update/"+rid+"/of/"+pid;
-          }
-
 
         },
 
         onSave(item){
           // this.task.createDate = new Date().getTime();
           console.log(item);
+
+          delete item.membersInfo;
+
           item.startDateUTC = new Date(item.startDate).getTime();
           delete item.startDate;
           item.dueDateUTC = new Date(item.dueDate).getTime();
           delete item.dueDate;
-
-          delete item.ownerName;
-          delete item.email;
-          delete item.membersInfo;
+          item.modifyDateUTC = new Date().getTime();
 
           let children = item.children;
-          let rid,url,result;
-          if(children.length>0){
-            for(let i =0;i<children.length;i++){
+          item.children = this.saveChildren(children);
 
-              rid=children[i].reference_id;
-              url = "/api/asset/update/"+rid+"/of/"+item.projectId;
-              result = {
-                "checked":children[i].checked
-              }
-              postData(this,url,result,()=>{
-
-              })
-            }
-            item.children = [];
-          }
-
-          if(this.progress ==100) {
+          if(this.progress == 100) {
             item.checked = true;
             item.status ="done";
           }
-          let url_item = "/api/asset/update/"+item.reference_id+"/of/"+item.projectId;
-          postData(this,url_item,item,()=>{
-            this.$emit('refreshData');
-          })
+
+          let pid,rid,url;
+
+          if(this.target =="project"){
+            pid = item._id
+            url = "/api/project/"+ pid +"/update";
+            delete item._id
+            postData(this,url,item,()=>{
+              this.$emit('refreshData');
+            })
+          }
+          else if(this.target =="task"){
+            rid = item.reference_id;
+            pid = item.projectId;
+            url = "/api/asset/update/"+rid+"/of/"+pid;
+            postData(this,url,item,()=>{
+              this.$emit('refreshData');
+            })
+          }
           this.closeDialog();
+
+        },
+        saveChildren(children){
+          let pid,rid,result;
+          if(children && children.length>0){
+            pid=children[0].projectId;
+            for(let i =0;i<children.length;i++){
+
+              let child = children[i];
+              rid=child.reference_id;
+
+              url = "/api/asset/update/"+rid+"/of/"+pid;
+              if(child.checked == true){
+                result = {
+                  "checked":true,
+                  "status":"done",
+                }
+              }else{
+                result = {
+                  "checked":false
+                }
+              }
+              postData(this,url,result)
+            }
+            children = [];
+            return children;
+          }else{
+            return false;
+          }
 
         },
         closeDialog(){

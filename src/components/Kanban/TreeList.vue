@@ -37,21 +37,21 @@
         </div>
         <input v-else class="vue-tree-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="setUnEditable">
         <div class="operation" v-show="isHover">
-          <span title="add tree node" @click.stop.prevent="addChild(false)" v-if="!model.isLeaf && model.reference_id =='root'">
+          <span title="add tree node" @click.stop.prevent="promoteName(false)" v-if="!model.isLeaf && model.reference_id =='root'">
             <slot name="addTreeNode">
               <i class="vue-tree-icon icon-folder-plus-e"></i>
             </slot>
           </span>
-          <span title="add tree node" @click.stop.prevent="addChild(true)" v-if="!model.isLeaf">
+          <span title="add tree node" @click.stop.prevent="promoteName(true)" v-if="!model.isLeaf && model.reference_id !='root'">
             <slot name="addLeafNode">
               <i class="vue-tree-icon icon-plus"></i>
             </slot>
           </span>
-          <span title="edit" @click.stop.prevent="setEditable">
-            <slot name="edit">
-              <i class="vue-tree-icon icon-edit"></i>
-            </slot>
-          </span>
+          <!--<span title="edit" @click.stop.prevent="setEditable">-->
+            <!--<slot name="edit">-->
+              <!--<i class="vue-tree-icon icon-edit"></i>-->
+            <!--</slot>-->
+          <!--</span>-->
           <span title="delete" @click.stop.prevent="delNode">
             <slot name="edit">
               <i class="vue-tree-icon icon-trash"></i>
@@ -98,6 +98,7 @@
         isDragEnterNode: false,
         expanded: true,
         createItem:{},
+        nameDialogShow:false
 
       }
     },
@@ -159,9 +160,19 @@
         let rid = this.model.reference_id;
         let pid = this.model.projectId;
         let url = "/api/asset/update/"+rid+"/of/"+pid;
+        let value ={
+          "name":e.target.value,
+          "modifyDateUTC":new Date().getTime()
+        }
         postData(this,url,{"name":e.target.value},()=>{
+
           this.$emit('fetchData');
         });
+      },
+      promoteName(isLeaf){
+        let model =this.model;
+        let str=prompt("Enter the task name","Name");
+        this.addChild(isLeaf,model,str);
       },
 
       delNode () {
@@ -227,27 +238,23 @@
         node.$emit('click', clickModel)
       },
 
-      addChild(isLeaf) {
-        console.log(this.model)
-        let model = this.model;
+      addChild(isLeaf,model,name) {
 
-        const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName;
         let createDate = new Date().getTime();
         this.expanded = true;
         let reference_id = model.reference_id;
-        let parent;
+        let desc;
         if(model.reference_id == "root"){
-          parent=null;
+          desc=null;
         }else{
-          parent = reference_id;
+          desc = reference_id;
         }
-        console.log(parent);
 
         this.createItem = {
           "name": name,
           "createDate":createDate,
           "projectId": model.projectId,
-          "parent": parent,
+          "desc": desc,
           "isLeaf": isLeaf,
           "status": "todo",
           "startDateUTC":"",
@@ -260,14 +267,13 @@
 
         let url = "/api/asset/create/"+ model.projectId;
 
-        postData(this,url,this.createItem,(data)=>{
-          console.log(data)
-          // this.createItem.reference_id = data.data;
-          // this.blocks.push(this.createItem)
+        postData(this,url,this.createItem,()=>{
+
+          this.$emit("fetchData");
         })
-
-
       },
+
+
 
       dragStart(e) {
         if (!this.model.dragDisabled) {

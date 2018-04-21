@@ -17,7 +17,8 @@
                        :items="items"
                        hide-actions
                        class="elevation-1"
-                       :search="search">
+                       :search="search"
+                       :loading:="loading">
 
           <template slot="items" slot-scope="props">
             <td>
@@ -26,12 +27,12 @@
                     <v-icon class="">folder</v-icon>{{ props.item.name }}
                 </router-link>
               </span>
-              <v-chip small outline color="green" v-if="props.item.startDate">{{ props.item.startDate }}</v-chip>
-              <v-chip small outline color="red" v-if="props.item.dueDate" >{{ props.item.dueDate }}</v-chip>
+              <v-chip small outline color="green" v-if="props.item.startDate!=null">{{ props.item.startDate }}</v-chip>
+              <v-chip small outline color="red" v-if="props.item.dueDate!=null" >{{ props.item.dueDate }}</v-chip>
             </td>
             <td class="text-xs-right">{{ props.item.ownerName }}</td>
             <td class="text-xs-right">{{ props.item.localDate }}</td>
-
+            <!--<td class="text-xs-right"><span v-if="props.item.modifyDateUTC >0 ">{{ props.item.modifyDate }}</span></td>-->
             <td class="justify-center layout px-0">
               <v-btn icon ripple @click="editItem(props.item)">
                 <v-icon color="grey lighten-1">info</v-icon>
@@ -44,8 +45,6 @@
             </v-alert>
           </template>
         </v-data-table>
-
-
 
         <v-dialog v-model="dialog" max-width="500px">
           <v-card fluid justify-center>
@@ -72,11 +71,11 @@
                   <v-flex xs12 md12>
                     <v-text-field label="Part Number" v-model="project.partNumber" multi-line required/>
                   </v-flex>
-
                 </v-layout>
               </v-container>
               <small>*indicates required field</small>
             </v-card-text>
+
             <v-card-actions>
               <v-layout row justify-center text-xs-center>
                 <v-flex xs6>
@@ -95,6 +94,7 @@
                   max-width="500px"
                   scrollable class="editDialog">
           <card target="project"
+                :myInformation="myInformation"
                 :editedItem = "editedItem"
                 :editedShow = "editedShow"
                 :users="users"
@@ -102,310 +102,31 @@
                 @refreshData="fetchData"></card>
 
         </v-dialog>
-        <!--<v-dialog v-model="editedShow" max-width="500px"-->
-                  <!--transition="dialog-bottom-transition"-->
-                  <!--:overlay="false"-->
-                  <!--scrollable>-->
-
-          <!--<v-card tile id="leaf_card" justify-center text-xs-center>-->
-
-            <!--<v-toolbar card dark color="primary">-->
-              <!--<v-btn icon @click.native="editedShow = false" dark>-->
-                <!--<v-icon>close</v-icon>-->
-              <!--</v-btn>-->
-              <!--<v-toolbar-title>-->
-                <!--<v-text-field class="edit_data" v-model="editedItem.name" :disabled="disable" style="font-size: 20px;"/>-->
-              <!--</v-toolbar-title>-->
-              <!--<v-spacer/>-->
-              <!--<v-toolbar-items>-->
-                  <!--<v-btn icon @click=" disable = !disable " v-if="disable"><i class="material-icons" >edit</i></v-btn>-->
-                  <!--<v-btn icon  @click="onSave" v-if="!disable"><i class="material-icons">save</i></v-btn>-->
-                  <!--<v-menu bottom right offset-y>-->
-                    <!--<v-btn slot="activator" dark icon>-->
-                      <!--<v-icon>more_vert</v-icon>-->
-                    <!--</v-btn>-->
-                    <!--<v-list>-->
-                      <!--<v-list-tile @click="">-->
-                        <!--<v-list-tile-title>Change Owner</v-list-tile-title>-->
-                      <!--</v-list-tile>-->
-                      <!--<v-list-tile @click="deleteProject(editedItem)">-->
-                        <!--<v-list-tile-title>Delete</v-list-tile-title>-->
-                      <!--</v-list-tile>-->
-                    <!--</v-list>-->
-                  <!--</v-menu>-->
-              <!--</v-toolbar-items>-->
-            <!--</v-toolbar>-->
-
-            <!--<v-card-text>-->
-              <!--<v-container>-->
-                  <!--<v-subheader>Progress:-->
-                    <!--<v-progress-linear-->
-                    <!--:value="progress_value"-->
-                    <!--height="7"-->
-                    <!--color="success"-->
-                    <!--/>-->
-                    <!--{{progress_value}}%-->
-                  <!--</v-subheader>-->
-
-
-                  <!--<v-layout row wrap>-->
-                    <!--<v-flex xs3>-->
-                      <!--<v-subheader >Start-->
-                        <!--<v-menu-->
-                          <!--transition="slide-x-transition"-->
-                          <!--bottom-->
-                          <!--right-->
-                          <!--:disabled="disable"-->
-                        <!--&gt;-->
-                          <!--<v-btn icon slot="activator">-->
-                            <!--<i class="material-icons">access_time</i>-->
-                          <!--</v-btn>-->
-                          <!--<v-date-picker v-model="editedItem.startDate" no-title scrollable/>-->
-                        <!--</v-menu>-->
-                      <!--</v-subheader>-->
-                    <!--</v-flex>-->
-
-                    <!--<v-flex xs3>-->
-                      <!--<v-chip v-if="editedItem.startDate!=null" color="success">{{editedItem.startDate}}</v-chip>-->
-                    <!--</v-flex>-->
-
-                    <!--<v-flex xs3>-->
-                      <!--<v-subheader >Due-->
-                        <!--<v-menu-->
-                          <!--transition="slide-x-transition"-->
-                          <!--bottom-->
-                          <!--right-->
-                          <!--:disabled="disable"-->
-                        <!--&gt;-->
-                          <!--<v-btn icon slot="activator" >-->
-                            <!--<i class="material-icons">access_time</i>-->
-                          <!--</v-btn>-->
-                          <!--<v-date-picker v-model="editedItem.dueDate" no-title scrollable/>-->
-                        <!--</v-menu>-->
-                      <!--</v-subheader>-->
-                    <!--</v-flex>-->
-
-                    <!--<v-flex xs3>-->
-                      <!--<v-chip v-if="editedItem.dueDate!=null" color="red" class="time">{{editedItem.dueDate}}</v-chip>-->
-                    <!--</v-flex>-->
-                  <!--</v-layout>-->
-
-
-
-                  <!--<v-layout row wrap>-->
-                    <!--<v-flex xs2>-->
-                      <!--<v-subheader>Member</v-subheader>-->
-                    <!--</v-flex>-->
-                    <!--<v-flex xs10>-->
-                      <!--<v-layout row wrap>-->
-                        <!--<v-flex xs2 v-for="member in  editedItem.members" :key="member._id">-->
-                          <!--<div class="text-xs-center">-->
-                            <!--<v-chip>-->
-                              <!--<v-avatar>-->
-                                <!--<img :src="member.avater">-->
-                              <!--</v-avatar>-->
-                              <!--{{member.name}}-->
-                            <!--</v-chip>-->
-                          <!--</div>-->
-                        <!--</v-flex>-->
-                        <!--<v-btn icon :disabled="disable" @click.stop="addMemberShow = !addMemberShow"> <i class="material-icons">group_add</i></v-btn>-->
-                      <!--</v-layout>-->
-                    <!--</v-flex>-->
-                    <!--<v-dialog v-model="addMemberShow" max-width="500px" height="400px">-->
-                      <!--<v-card>-->
-                        <!--<v-card-title>-->
-                          <!--Add collaborators-->
-                        <!--</v-card-title>-->
-                        <!--<v-card-text>-->
-                          <!--<v-container fluid>-->
-                            <!--<v-layout row wrap>-->
-                              <!--<v-flex xs12>-->
-                                <!--<v-select-->
-                                  <!--label="Select"-->
-                                  <!--:items="people"-->
-                                  <!--v-model="addingMembers"-->
-                                  <!--item-text="name"-->
-                                  <!--multiple-->
-                                  <!--chips-->
-                                  <!--max-height="300px"-->
-                                  <!--autocomplete>-->
-
-                                <!--<template slot="selection" slot-scope="data">-->
-                                  <!--<v-chip-->
-                                    <!--close-->
-                                    <!--@input="data.parent.selectItem(data.item)"-->
-                                    <!--:selected="data.selected"-->
-                                    <!--class="chip&#45;&#45;select-multi"-->
-                                    <!--:key="JSON.stringify(data.item._id)"-->
-                                  <!--&gt;-->
-                                    <!--<v-avatar>-->
-                                      <!--<img :src="data.item.avatar">-->
-                                    <!--</v-avatar>-->
-                                    <!--{{ data.item.name }}-->
-                                  <!--</v-chip>-->
-                                <!--</template>-->
-                                <!--<template slot="item" slot-scope="data" >-->
-                                  <!--<template v-if="typeof data.item !== 'object'">-->
-                                    <!--<v-list-tile-content v-text="data.item"></v-list-tile-content>-->
-                                  <!--</template>-->
-                                  <!--<template v-else>-->
-                                    <!--<v-list-tile-avatar>-->
-                                      <!--<img :src="data.item.avatar">-->
-                                    <!--</v-list-tile-avatar>-->
-                                    <!--<v-list-tile-content>-->
-                                      <!--<v-list-tile-title v-html="data.item.name"></v-list-tile-title>-->
-                                    <!--</v-list-tile-content>-->
-                                  <!--</template>-->
-                                <!--</template>-->
-                              <!--</v-select>-->
-
-                              <!--</v-flex>-->
-                              <!--<v-flex xs12>-->
-                                <!--<v-expansion-panel class="elevation-0" >-->
-                                  <!--<v-expansion-panel-content >-->
-                                    <!--<div slot="header">Advanced</div>-->
-                                    <!--<v-card>-->
-                                      <!--<v-list>-->
-                                        <!--<v-list-tile v-for="member in editedItem.members" :key="member._id">-->
-                                          <!--<v-list-tile-avatar>-->
-                                            <!--<img :src="member.avatar">-->
-                                          <!--</v-list-tile-avatar>-->
-
-                                          <!--<v-list-tile-title>{{member.name}}</v-list-tile-title>-->
-                                          <!--<v-list-tile-action>-->
-                                            <!--<v-btn icon ripple @click="deleteMember(member)"><i class="material-icons" color="red">delete</i></v-btn>-->
-                                          <!--</v-list-tile-action>-->
-                                        <!--</v-list-tile>-->
-                                      <!--</v-list>-->
-                                    <!--</v-card>-->
-                                  <!--</v-expansion-panel-content>-->
-                                <!--</v-expansion-panel>-->
-                              <!--</v-flex>-->
-                            <!--</v-layout>-->
-                          <!--</v-container>-->
-                        <!--</v-card-text>-->
-                        <!--<v-card-actions>-->
-                          <!--<v-btn color="primary" flat @click.stop="addMemberShow=false">Close</v-btn>-->
-                          <!--<v-spacer/>-->
-                          <!--<v-btn color="primary" flat @click="addMembers">Send</v-btn>-->
-                        <!--</v-card-actions>-->
-                      <!--</v-card>-->
-                    <!--</v-dialog>-->
-
-                    <!--<v-flex xs2>-->
-                      <!--<v-subheader>Labels</v-subheader>-->
-                    <!--</v-flex>-->
-                    <!--<v-flex xs10>-->
-                      <!--<v-layout row wrap>-->
-                        <!--<v-flex xs2 text-xs-center v-for="label in selectedLabels" :key="label.id" v-if="label.selected =true">-->
-
-                            <!--<v-chip :color="label.color"-->
-                                          <!--@input="label.selected =false">{{label.name}}</v-chip>-->
-                        <!--</v-flex>-->
-
-                        <!--<v-menu offset-y :close-on-content-click="false" >-->
-                          <!--<v-btn icon :disabled="disable" slot="activator"><i class="material-icons">local_offer</i></v-btn>-->
-                          <!--<v-card style="width:300px;">-->
-                            <!--<v-subheader>Select Labels</v-subheader>-->
-
-                              <!--<v-flex xs12 v-for="(label,index) in allLabels" :key="index">-->
-                                <!--<v-checkbox-->
-                                  <!--:label="label.name"-->
-                                  <!--v-model="selectedLabels"-->
-                                  <!--:color="label.color"-->
-                                  <!--:checked="label.selected"-->
-                                  <!--@click.native="label.selected = !label.selected"-->
-                                  <!--:value="label"-->
-                                  <!--hide-details-->
-                                <!--/>-->
-
-                              <!--</v-flex>-->
-                              <!--<v-flex xs12>-->
-                                <!--<v-btn icon>add</v-btn>-->
-                              <!--</v-flex>-->
-                          <!--</v-card>-->
-                        <!--</v-menu>-->
-                      <!--</v-layout>-->
-                    <!--</v-flex>-->
-                  <!--</v-layout>-->
-              <!--<v-divider class="divide"/>-->
-
-              <!--<v-layout row wrap>-->
-                <!--<v-flex xs4><v-subheader>Project Code</v-subheader></v-flex>-->
-                <!--<v-flex xs8>-->
-                  <!--<v-text-field v-model="editedItem.code" :disabled="disable"/>-->
-                <!--</v-flex>-->
-                <!--<v-flex xs4><v-subheader>Client</v-subheader></v-flex>-->
-                <!--<v-flex xs8>-->
-                  <!--<v-text-field v-model="editedItem.client" :disabled="disable"/>-->
-                <!--</v-flex>-->
-                <!--<v-flex xs4><v-subheader>Part Number</v-subheader></v-flex>-->
-                <!--<v-flex xs8>-->
-                  <!--<v-text-field-->
-                    <!--name="partNumber"-->
-                    <!--v-model="editedItem.partNumber"-->
-                    <!--multi-line-->
-                    <!--:disabled="disable"-->
-                  <!--/>-->
-                <!--</v-flex>-->
-              <!--</v-layout>-->
-              <!--<v-divider class="divide"/>-->
-
-               <!--<v-layout row wrap>-->
-                  <!--<v-flex xs12>-->
-                    <!--<v-subheader>Description</v-subheader>-->
-
-                      <!--<v-layout row text-center>-->
-                        <!--<v-flex xs12>-->
-                          <!--<v-text-field-->
-                            <!--name="description"-->
-                            <!--v-model="editedItem.description"-->
-                            <!--multi-line-->
-                            <!--textarea-->
-
-                            <!--style="width: 80%"-->
-                            <!--:disabled="disable"-->
-                          <!--/>-->
-                        <!--</v-flex>-->
-                      <!--</v-layout>-->
-                  <!--</v-flex>-->
-               <!--</v-layout>-->
-                <!--<v-divider></v-divider>-->
-                <!--<v-layout>-->
-                <!--<v-flex xs12>-->
-                  <!--<v-subheader>Checklist</v-subheader>-->
-                  <!--<v-divider class="divide"/>-->
-
-                  <!--<v-subheader>Comments History</v-subheader>-->
-                  <!--<v-divider class="divide"/>-->
-                <!--</v-flex>-->
-
-              <!--</v-layout>-->
-              <!--</v-container>-->
-            <!--</v-card-text>-->
-
-            <!--&lt;!&ndash;<v-footer>&ndash;&gt;-->
-              <!--&lt;!&ndash;<v-layout row>&ndash;&gt;-->
-                <!--&lt;!&ndash;<v-spacer/>&ndash;&gt;-->
-                <!--&lt;!&ndash;<v-flex xs9><v-text-field style="" label="Comment"/></v-flex>&ndash;&gt;-->
-                <!--&lt;!&ndash;<v-flex xs2><v-btn icon><i class="material-icons">send</i></v-btn></v-flex>&ndash;&gt;-->
-              <!--&lt;!&ndash;</v-layout>&ndash;&gt;-->
-            <!--&lt;!&ndash;</v-footer>&ndash;&gt;-->
-          <!--</v-card>-->
-
-        <!--</v-dialog>-->
-
       </v-card>
     </v-flex>
-
-
   </v-layout>
 </template>
 
 <script>
-    import Card from '../Kanban/Card'
+  Date.prototype.format = function (fmt) { //author: meizz
+    var o = {
+      "M+": this.getMonth() + 1, //月份
+      "d+": this.getDate(), //日
+      "h+": this.getHours(), //小时
+      "m+": this.getMinutes(), //分
+      "s+": this.getSeconds(), //秒
+      "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+      "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+      if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+  }
+  import Card from '../Kanban/Card'
     export default {
       name: "all-task-lists",
+
       components:{
         'card':Card
       },
@@ -424,7 +145,7 @@
               text:'Owner',
               align:'center',
               sortable:true,
-              value:'owner',
+              value:'ownerName',
               width:'10%',
             },
             {
@@ -434,6 +155,13 @@
               value:'createDate',
               width:'10%',
             },
+            // {
+            //   text:'Modified',
+            //   align:'center',
+            //   sortable:true,
+            //   value:'modifyDate',
+            //   width:'15%',
+            // },
             {
               text:'Infomation',
               align:'center',
@@ -443,8 +171,13 @@
             }
 
           ],
+          loader:null,
+          loading:false,
           search:'',
+          myInforamtion:{},
+          users:[],
           items: [],
+
           dialog: false,
           project:{},
           editedShow:false,
@@ -457,8 +190,6 @@
           addMemberShow:false,
           selectedMembers: [],
           addingMembers:[],
-          peolpe: [],
-          users:[],
           labelMenu:true,
           allLabels:[],
           selectedLabels:[],
@@ -470,185 +201,232 @@
       },
 
       watch: {
+        loader () {
+          const l = this.loader
+          this[l] = !this[l]
 
+          setTimeout(() => (this[l] = false), 3000)
+
+          this.loader = null
+        }
       },
 
-      created() {
-
+      created(){
+        this.myInfo();
+        this.getUsers();
+        console.log("created")
+      },
+      mounted() {
         this.fetchData();
+        console.log("mounted")
 
       },
 
       methods:{
+        myInfo(){
+          let url = "api/user/info";
 
+          getData(this,url,(data)=>{
+            this.myInformation=data;
 
-        fetchData(callback = undefined) {
-          let urlUser = "/api/user/all";
-          getData(this,urlUser,(data)=>{
-            //get people data
-            this.people = data;
-            this.users = data;
-
-            //get projects data
-            let urlProject = "/api/project/involved";
-            getData(this,urlProject,(data)=>{
-              let items = data;
-
-              for(let i = 0 ;i<items.length;i++) {
-                //transfer time stick to local time
-                let localDate = this.convertLocalTime(items[i].createDate);
-                items[i].localDate = localDate;
-
-                //transfer owner to ownerName
-                let id = items[i].owner;
-                let name = this.searchUserInfo(id, "name");
-                items[i].ownerName = name;
-                let members = items[i].members;
-                for (let j = 0; j < members.length; j++) {
-                  let memberID = members[j];
-                  let memberName = this.searchUserInfo(memberID, "name");
-                  let avater = this.searchUserInfo(memberID, "avater");
-                  members[j] = {"_id": memberID, "name": memberName, "avater": avater};
-                }
-                items[i].members = members;
-
-              }
-              this.items = items;
-
-              let d = this.items;
-              if(callback) {
-                callback(d);
-              }
-            });
-          });
+          })
 
         },
-        convertLocalTime(time){
-          let date = new Date(time);
-          let year = date.getFullYear(); // 获取完整的年份(4位,1970)
-          let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
-          let day = date.getDate(); // 获取日(1-31)
-          // date.getTime(); // 获取时间(从1970.1.1开始的毫秒数)
-          // date.getHours(); // 获取小时数(0-23)
-          // date.getMinutes(); // 获取分钟数(0-59)
-          // date.getSeconds(); // 获取秒数(0-59)
 
-          return year+"-"+month+"-"+day;
+        getUsers(){
+          let url ="/api/user/all";
+          getData(this,url,(data)=>{
+            this.users=data;
+
+          })
+        },
+
+        fetchData(callback = undefined) {
+            //get projects data
+
+            let bigData = [];
+            let url_involved = "/api/project/involved";
+            let url_member ="/api/project/involved?type=member"
+            getData(this,url_involved,(data)=>{
+              bigData.push(...data);
+
+              getData(this,url_member,(data)=>{
+                bigData.push(...data);
+                this.items = this.processData(bigData);
+                console.log("fetch")
+              })
+            });
+        },
+
+        processData(data){
+
+          let items = data;
+            for (let i = 0; i < items.length; i++) {
+              let item = items[i];
+              //transfer time stick to local time
+              let localDate = this.convertLocalTime(item.createDate);
+              item.localDate = localDate;
+              item.modifyDate = new Date(item.modifyDateUTC).format("yyyy-MM-dd hh:mm:ss");
+              //transfer owner to ownerName
+              let owner_id = item.owner;
+              console.log(owner_id)
+              item.ownerName = this.searchUserInfo(owner_id, "name");
+              console.log(item.ownerName)
+              item.email = this.searchUserInfo(owner_id, "email");
+              item.startDate = this.convertLocalTime(item.startDateUTC);
+              item.dueDate = this.convertLocalTime(item.dueDateUTC);
+              item.membersInfo = this.getEditedItemMembers(item.members);
+
+
+
+              items[i] = item
+            }
+            return items;
+        },
+
+        convertLocalTime(time){
+          if(time==0 || time =="" || time ==null){
+            return null;
+          }else{
+            let date = new Date(time);
+            let year = date.getFullYear(); // 获取完整的年份(4位,1970)
+            let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
+            let day = date.getDate(); // 获取日(1-31)
+
+            return year+"-"+month+"-"+day;
+          }
         },
 
         searchUserInfo(id,target){
-          let that = this;
-          let people = that.users;
 
-          for(let i=0;i<people.length;i++){
-            if(id == people[i]._id){
+          let that = this;
+          let users = that.users;
+
+          for(let i=0;i<users.length;i++){
+            if(id == users[i]._id){
               if(target == "name"){
-                  return people[i].name;
+                // console.log(users[i].name)
+                  return users[i].name;
               }
               else if(target == "avater"){
-                  return  people[i].avater;
+                  return  users[i].avater;
+              }
+              else if(target == "department"){
+                return  users[i].department;
+              }
+              else if(target == "email"){
+                return  users[i].email;
               }
             }
           }
         },
 
         editItem (item) {
-          // this.editedIndex = this.items.indexOf(item);
-          // this.editedItem = Object.assign({}, item);
-          //
-          // let owner_id =this.editedItem.owner;
-          //
-          // this.editedItem.ownerName = this.searchMemberInfo(owner_id,"name");
-          // this.editedItem.email = this.searchMemberInfo(owner_id,"email");
-          //
-          // let parent = this.editedItem.reference_id;
-          // let children=[];
-          // // if(parent !=null){
-          // //   children = this.blocks.filter((item)=>{
-          // //     if(item.parent == parent) return item;
-          // //   })
-          // // }else{
-          // //   children =this.blocks.filter((item)=>{
-          // //     if(item.parent == null) return item;
-          // //   })
-          // // }
-          //
-          // this.editedItem.children = children;
-          //
-          // this.allLabels = this.editedItem.labels;
-          // let labels = this.allLabels;
-          // // console.log(labels);
-          // let j=0;
-          // for(let i=0;i<labels.length;i++){
-          //
-          //   if(labels[i].selected == true){
-          //     this.selectedLabels[j]=labels[i];
-          //     j++;
-          //   }
-          // }
-          //
-          // console.log(this.editedItem)
-          // this.editedShow = true;
 
           this.editedIndex = this.items.indexOf(item);
           this.editedItem = Object.assign({}, item);
-
-          let owner_id =this.editedItem.owner;
-
-          this.editedItem.ownerName = this.searchUserInfo(owner_id,"name");
-          this.editedItem.email = this.searchUserInfo(owner_id,"email");
-
-          let parent = this.editedItem.reference_id;
-          // search if exit children task
-          console.log(parent)
-          this.editedItem.children = this.getEditedItemChildren("task",parent);
-
-          // let members =  this.editedItem.members;
-          // this.editedItem.membersInfo = this.getEditedItemMembers(members);
-
-          let labels = this.editedItem.labels;
-          this.editedItem.labelsInfo = this.getEditedItemLabels(labels);
-
-          this.editedShow = true;
+          this.editedShow = true
+          this.editedItem.children = this.getEditedItemChildren("project",item);
+          this.editedItem.labelDetail = this.getEditedItemLabel(item.label);
           console.log(this.editedItem);
           console.log("edited")
         },
-        getEditedItemChildren(target,parent){
-          let children;
-          if(target =="project"){
-            children = this.items.filter((item)=>{
-              if(item.parent == null) return item;
-            })
-          }
 
-          if(target == "task"){
-            children = this.items.filter((item) => {
-              if (item.parent == parent) return item;
-            })
-          }
-
-          return children;
-        },
-
-        getEditedItemLabels(labels){
-          // console.log(labels);
-          let arr =[];
-          let j=0;
-          if(labels.length>0){
-            for(let i=0;i<labels.length;i++){
-
-              if(labels[i].selected == true){
-                arr[j]=labels[i];
-                j++;
-              }
+        getEditedItemMembers(members){
+          let arr=[];
+          if(members.length !=0){
+            for (let i = 0; i < members.length; i++) {
+              let memberID = members[i];
+              let memberName = this.searchUserInfo(memberID, "name");
+              let avater = this.searchUserInfo(memberID, "avater");
+              arr[i] = {"_id": memberID, "name": memberName, "avater": avater};
             }
           }
-
           return arr;
+        },
+
+
+        getEditedItemLabel(labels){
+          let that = this;
+          console.log(labels);
+          //只有一个部门 标签
+
+          let label = labels[0];
+          let myLabels = that.myInformation.labels;
+          console.log(myLabels)
+          let v = myLabels.find((item)=>{
+            let name = item.name.trim().toLowerCase();
+            if(name==label)return item
+
+          })
+          console.log(v)
+          return {
+            "name":label.toUpperCase(),
+            "color":v.color
+
+          }
+        },
+
+        getEditedItemChildren(target,current){
+
+          let children;
+          let pid;
+
+          if(target === "project"){
+            pid = current._id;
+          }
+          else if(target === "task"){
+            pid = current.projectId;
+          }
+
+          let url="api/project/show/"+ pid +"?assets=1";
+          getData(this,url,(data)=>{
+            let assets = data.assets;
+            if(target =="project"){
+              children = assets.filter((item)=>{
+                if(item.desc == "root") {
+                  item.ownerName = this.searchUserInfo(item.owner,"name");
+                  return item;
+                }
+              })
+            }
+
+            if(target == "task"){
+              children = assets.filter((item) => {
+                if (item.desc == current.reference_id ) {
+                  item.ownerName = this.searchUserInfo(item.owner,"name");
+                  return item;
+                }
+              })
+            }
+            console.log(children);
+            console.log("children")
+            this.editedItem.children = children;
+            return  this.editedItem;
+          })
+
         },
         createProject(){
           // let that = this;
-          this.project.createDate=new Date().getTime();
+          let project =this.project;
+
+          this.project ={
+            "name": project.name,
+            "code": project.code,
+            "client":project.client,
+            "partNumber":project.partNumber,
+            "createDate" :new Date().getTime(),
+            "startDateUTC" :0,
+            "dueDateUTC" :0,
+            "modifyDateUTC" :new Date().getTime(),
+            "members":[],
+            "checked":false,
+            "label":[
+              this.myInformation.department
+            ],
+            "status":"todo",
+            "children":[]
+          }
           console.log(this.project);
           // this.project.labels =
 
@@ -671,8 +449,8 @@
           let pid=that.editedItem._id;
           let item = that.editedItem;
           delete item._id;
-          delete item.members;
-          item.labels = this.allLabels;
+          delete item.membersInfo;
+
           console.log(item);
 
           if (that.editedIndex > -1) {

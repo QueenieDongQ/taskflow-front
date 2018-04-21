@@ -15,22 +15,6 @@
                 <v-card-title>{{ block.name }}</v-card-title>
                 <v-card-text>{{ block.createDate }}</v-card-text>
 
-                <!--<v-list fluid>-->
-                  <!--<v-list-tile>-->
-                    <!--<v-list-tile-content>-->
-                      <!--<v-list-tile-title>{{block.name}}</v-list-tile-title>-->
-                    <!--</v-list-tile-content>-->
-                    <!--<v-list-tile-action>-->
-                      <!--<v-btn icon ripple @click="editItem(block)">-->
-                        <!--<v-icon color="grey lighten-1">info</v-icon>-->
-                      <!--</v-btn>-->
-                    <!--</v-list-tile-action>-->
-                  <!--</v-list-tile>-->
-
-                  <!--<div class="card-ft">-->
-                    <!--{{ '计划完成时间' + block.createDate }}-->
-                  <!--</div>-->
-                <!--</v-list>-->
               </v-card>
             </slot>
           </li>
@@ -118,10 +102,10 @@
   }
 
   .drag-item {
-    padding: 10px;
+    padding: 5px;
     margin: 10px;
     height: 100px;
-    background: rgba(0,0,0, 0.4);
+    background: rgba(0,0,0, 0.05);
 
 
   }
