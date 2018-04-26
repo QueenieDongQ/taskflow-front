@@ -41,10 +41,11 @@
         },
         height: {
           type: String,
-          default: '400px'
+          default: '550px'
         },
         bigData:{
           type:Array,
+
         },
         searchID:{
           type:String,
@@ -96,8 +97,21 @@
 
       },
       mounted() {
-        this.initData();
-
+        // this.initData();
+        // console.log(this.bigData);
+        // let a = [{
+        //   "_id":this.searchID,
+        //   "assets":[
+        //   {
+        //     "name":123,
+        //     "status":"todo",
+        //     "owner":"5acb47dc1696da000d7b974b",
+        //   }
+        // ]
+        //
+        // }]
+        // this.filterData(a)
+        this.initChart();
       },
       // updated: function () {
       //   console.log('updated 钩子执行...');
@@ -112,22 +126,20 @@
       },
       methods: {
 
-        initData(){
+        initData(searchID,searchType,bigData){
           let that = this;
-          setInterval(function () {
-            let bigData = that.bigData;
-            console.log(that.bigData)
-            if(that.bigData.length !=0){
-              that.filterData(bigData)
+            console.log(bigData)
+            if(bigData.length !=0){
+              // this.searchID = searchID;
+              that.filterData(searchID,searchType,bigData)
             }
-          },7000)
+          // },5000)
         },
 
-        filterData(data){
+        filterData(searchID,searchType,data){
 
-          let searchType =this.searchType;
-          let searchID = this.searchID;
-          console.log(searchID)
+          console.log(data)
+
           let arr1=[],arr2=[];
           arr1 = data.find((item)=>{
             return item._id == searchID;
@@ -183,12 +195,12 @@
           this.result.seriesData[2].value = s_done;
 
           this.delay = s_delay;
-          this.initChart(this.result);
+          this.initChart();
 
         },
-        initChart(result){
+        initChart(){
           this.chart = echarts.init(document.getElementById(this.id))
-          let data = result;
+          let data = this.result;
           console.log("chart")
           this.chart.setOption(
             {title : {

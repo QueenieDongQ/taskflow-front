@@ -6,12 +6,13 @@ import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css' // Ensure you are using css-loader
 import App from './App'
 import router from './router'
-
 import VueResource from 'vue-resource';
+import uploader from 'vue-simple-uploader'
 
 Vue.use(Vuex)
 Vue.use(Vuetify)
 Vue.use(VueResource)
+Vue.use(uploader)
 
 Vue.config.productionTip = false
 

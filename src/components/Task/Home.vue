@@ -47,8 +47,9 @@
               </v-layout>
               <v-layout row>
                 <v-flex xs12>
-                  <dashboard :myInformation="myInformation"
-                             :bigData.sync="bigData"
+                  <dashboard ref="child"
+                             :myInformation="myInformation"
+                             :bigData="bigData"
                              style="float:left"
                              :searchID = "searchID"
                              :searchType = "searchType"
@@ -98,12 +99,11 @@
 
       },
       created(){
+      },
+      mounted() {
         let that =this;
         that.myInfo();
         that.fetchData();
-      },
-      mounted() {
-        alert("");
       },
       methods:{
         myInfo(){
@@ -115,44 +115,79 @@
         fetchData(callback = undefined) {
           //get projects data
           let bigData = [];
-          let url_involved = "/api/project/involved";
-          let url_member ="/api/project/involved?type=member"
-          getData(this,url_involved,(data)=>{
-            bigData.push(...data);
-            // console.log(this.bigData)
-            getData(this,url_member,(data)=>{
-              bigData.push(...data);
 
-              this.fetchAssets(bigData);
-              this.bigData = bigData;
-              this.searchID = bigData[0]._id;
-              // console.log(this.bigData)
-              console.log("fetchHome")
+          let url_involved = "/api/project/involved";
+          let url_member ="/api/project/involved?type=member";
+          this.fetchInvolved(url_involved).then((data1)=>{
+            bigData.push(...data1);
+            this.fetchInvolved(url_member).then((data2)=>{
+              bigData.push(...data2);
+              let n = bigData.length;
+              bigData.forEach((project) => {
+
+                // fetch
+                this.fetchAssets(project, () => {
+                  n -= 1;
+                  if(n===0) {
+                    // console.log(bigData);
+                    this.bigData = bigData;
+                    this.initDashboard();
+                  }
+                });
+                // project.assets = fetched
+              })
             })
-          });
+          })
+
         },
-        fetchAssets(projects){
-          let result = projects.map((project)=>{
+        getBigData(url,callback){
+          console.log(typeof this);
+          getData(this,url,(data)=>{
+            callback(data)
+          })
+        },
+        fetchInvolved(url){
+
+          return new Promise((processBigData)=>{
+            this.getBigData(url,(result)=>{
+              console.log(result);
+              processBigData(result)
+            })
+          })
+        },
+
+        initDashboard(){
+
+          this.searchID = this.bigData[0]._id;
+          console.log(this.searchID,this.bigData);
+
+          this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
+        },
+        fetchAssets(project, callback){
+          // let result = projects.map((project)=>{
             let pid = project._id;
-            let assets;
             let url = "/api/project/involved/" + pid + "?assets=1";
             getData(this,url,(data)=>{
               project.assets = data.assets;
-              // console.log(data.assets)
-              return project;
-          })
-        })
-          return result;
+              if(callback) {
+                callback()
+              }
+            })
+          // })
         },
+
         getSearchProject(id,name){
 
           this.searchID = id;
           this.searchName = name;
+
           console.log(this.searchID )
+          this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
         },
         getSearchType(type){
           this.searchType = type;
           console.log(this.searchType )
+          this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
         }
 
 

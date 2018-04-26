@@ -159,6 +159,6 @@
 
 <style scoped>
   *{
-    vertical-align: middle;
+    /*vertical-align: middle;*/
   }
 </style>

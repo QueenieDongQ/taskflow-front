@@ -1,5 +1,26 @@
 <template>
   <v-card id="leaf_card" justify-center text-xs-center>
+    <v-dialog v-model="ownerDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <v-subheader>Change Owner</v-subheader>
+          </v-card-title>
+          <v-card-text>
+            <v-select
+              :items="users"
+              v-model="newOwner"
+              item-text="name"
+              label="Select"
+              autocomplete
+            ></v-select>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="primary" flat @click.stop="ownerDialog=false">Close</v-btn>
+            <v-spacer/>
+            <v-btn color="primary" flat @click.stop="changeOwner">Submit</v-btn>
+          </v-card-actions>
+        </v-card>
+    </v-dialog>
 
     <v-toolbar card dark color="primary">
       <v-btn icon @click.native="closeDialog" dark>
@@ -13,14 +34,14 @@
         <v-btn icon @click="judgeIsOwner() " v-if="disable"><i class="material-icons" >edit</i></v-btn>
         <v-btn icon  @click="onSave(editedItem)" v-if="!disable"><i class="material-icons">save</i></v-btn>
         <v-menu bottom right offset-y>
-          <v-btn slot="activator" dark icon>
+          <v-btn slot="activator" dark icon >
             <v-icon>more_vert</v-icon>
           </v-btn>
           <v-list>
-            <v-list-tile @click="changeOwner()">
+            <v-list-tile @click="ownerDialog=true">
               <v-list-tile-title>Change Owner</v-list-tile-title>
             </v-list-tile>
-            <v-list-tile @click="deleteProject(editedItem)">
+            <v-list-tile @click="deleteTask(editedItem)">
               <v-list-tile-title>Delete</v-list-tile-title>
             </v-list-tile>
           </v-list>
@@ -237,15 +258,48 @@
         <v-flex xs8>
           <v-text-field v-model="editedItem.client" :disabled="disable"/>
         </v-flex>
-        <v-flex xs4><v-subheader>Part Number</v-subheader></v-flex>
+        <v-flex xs4>
+          <v-subheader>
+              Part Number
+            <v-menu
+              offset-x
+              :close-on-content-click="false"
+              :nudge-width="200"
+              v-model="pn_menu"
+            >
+            <v-btn small flat icon slot="activator">
+              <v-icon  dark color="primary">info_outline</v-icon>
+            </v-btn>
+              <v-card>
+                <v-list two-line subheader>
+                  <v-list-tile v-for="(history,index) in editedItem.history_pn" :key="index">
+
+                    <v-list-tile-content>
+                      <v-list-tile-title>
+                        V{{index}}:{{history.partNumber}}
+                      </v-list-tile-title>
+                      <v-list-tile-sub-title>{{history.date}}</v-list-tile-sub-title>
+                    </v-list-tile-content>
+                  </v-list-tile>
+
+                </v-list>
+
+              </v-card>
+            </v-menu>
+          </v-subheader>
+
+        </v-flex>
         <v-flex xs8>
+
           <v-text-field
             name="partNumber"
             v-model="editedItem.partNumber"
             multi-line
             :disabled="disable"
           />
+
         </v-flex>
+
       </v-layout>
 
       <v-layout row wrap>
@@ -265,9 +319,7 @@
             </v-layout>
           </v-container>
         </v-flex>
-
       </v-layout>
-
 
       <v-layout row
                 v-if="editedItem.isLeaf==false || target == 'project' "
@@ -290,25 +342,57 @@
         <v-divider class="divide"/>
       </v-layout>
 
+      <v-layout row>
+       <v-flex xs12>
+         <v-subheader>Files</v-subheader>
+         <inputFile v-model="file" accept="" size="small" @onChange="fileChange"></inputFile>
+         <v-btn>Upload</v-btn>
+       </v-flex>
+      </v-layout>
 
       <v-layout row>
         <v-subheader>Comments History</v-subheader>
+        <v-list three-line>
+          <template v-for="(item, index) in editedItem.history_c">
+            <v-list-tile avatar  @click="">
+              <v-list-tile-avatar>
+                <img :src="item.avatar">
+              </v-list-tile-avatar>
+              <v-list-tile-content>
+                <v-list-tile-title v-html="item.content"></v-list-tile-title>
+                <v-list-tile-sub-title v-html=""></v-list-tile-sub-title>
+              </v-list-tile-content>
+            </v-list-tile>
+          </template>
+        </v-list>
       </v-layout>
 
-
     </v-card-text>
-    <!--<v-footer height="auto">-->
 
-    <!--<v-text-field style="" label="Comment"/>-->
-    <!--<v-btn icon><i class="material-icons">send</i></v-btn>-->
+    <v-footer height="125px" color="primary">
+      <v-layout row>
+        <v-flex xs2>
+          <v-avatar :src="myInformation.avatar"></v-avatar>
+        </v-flex>
+        <v-flex xs8>
+          <v-text-field style="" label="Comment" v-model="commit"/>
+        </v-flex>
+        <v-flex xs2>
+          <v-btn icon @click="sendCommit"><i class="material-icons">send</i></v-btn>
+        </v-flex>
+      </v-layout>
 
-    <!--</v-footer>-->
+    </v-footer>
   </v-card>
 </template>
 
 <script>
+  import  InputFile from './InputFile'
     export default {
       name: "Card",
+      components:{
+        'inputFile':InputFile
+      },
       props:{
         editedItem:{
           type:Object
@@ -331,16 +415,27 @@
         return{
           disable:true,
           progress_value:0,
+          ownerDialog:false,
           menu: false,
+          newOwner:{},
           addingMembers:[],
           addMemberShow:false,
+          oldPartNumber:"",
+          files:[],
+          file: null,
+          pn_menu:false,
+          commit:""
+
 
         }
       },
       computed:{
         progress(){
+          let item = this.editedItem;
           let children = this.editedItem.children;
-          if( children && children.length>0 ) {
+
+            if(children && children.length==0 && item.status==="done")return 100;
+            if((children && children.length==0 && item.status!="done")||children==undefined)return 0;
 
             let result =0;
             for (let i = 0; i < children.length; i++) {
@@ -349,81 +444,99 @@
               }
             }
             return parseInt(result/children.length*100);
-          }else{
-            return 0;
-          }
-        },
+          },
 
       },
       mounted(){
-        // this.getEditedItemChildren(this.target ,this.editedItem )
-        // this.editedItem.children = this.getEditedItemChildren( this.target ,this.editedItem )
+        if(this.target =="project"){
+          this.oldPartNumber = this.editedItem.partNumber;
+        }
 
       },
-      methods:{
+      methods: {
 
-        judgeIsOwner(){
-          console.log(this.myInformation._id )
-          console.log(this.myInformation.name )
-          if(this.myInformation._id !=this.editedItem.owner){
+        judgeIsOwner() {
+
+          console.log(this.myInformation.name)
+          if (this.myInformation._id != this.editedItem.owner) {
             return alert("你没有编辑权限");
-          }else{
-            return this.disable =false;
+          } else {
+            return this.disable = false;
           }
         },
-        changeOwner(){
+        changeOwner() {
+          let newOwner = this.newOwner;
+          let target = this.target;
+          let url = "";
+          if (target == "project") {
+            let pid = this.editedItem._id;
+            url = "/api/project/" + pid + "/to/" + newOwner._id;
 
+          }
+          else if (target == "task") {
+            let rid = this.editedItem.reference_id;
+            let pid = this.editedItem.projectId;
+            url = "/api/asset/" + rid + "/of/" + pid + "/to/" + newOwner._id;
+          }
+          let newId = {
+            "owner": newOwner._id
+          }
+          postData(this, url, newId, () => {
+            this.$emit('refreshData');
+            this.ownerDialog = false;
+            this.closeDialog();
+          })
         },
-        addMembers(){
-          let that =this;
+        addMembers() {
+          let that = this;
 
-          let pid,url;
-          if(this.target =="project"){
+          let pid, url;
+          if (this.target == "project") {
             pid = that.editedItem._id
-            url ="/api/project/"+pid+"/member/add";
+            url = "/api/project/" + pid + "/member/add";
           }
 
           let membersinfo = that.addingMembers;
 
           //合并两个数组，去重
-          let newMembersInfo = this.uniqueArray(this.editedItem.membersInfo.concat(membersinfo),"_id");
+          let newMembersInfo = this.uniqueArray(this.editedItem.membersInfo.concat(membersinfo), "_id");
 
           this.editedItem.membersInfo = newMembersInfo;
 
-          let id=[];
-          for(let i=0;i<newMembersInfo.length;i++){
-            id[i]=newMembersInfo[i]._id;
+          let id = [];
+          for (let i = 0; i < newMembersInfo.length; i++) {
+            id[i] = newMembersInfo[i]._id;
           }
-         console.log(id);
-          postData(this,url,id,()=> {
+          console.log(id);
+          postData(this, url, id, () => {
 
             this.$emit('refreshData');
 
-            this.addingMembers =[];
-            this.addMemberShow=false;
+            this.addingMembers = [];
+            this.addMemberShow = false;
 
           });
           // console.log(this.items);
 
         },
 
-        deleteMember(item,index){
+        deleteMember(item, index) {
           console.log(item);
           let r = confirm("确定删除该成员？");
-          if(!r){
+          if (!r) {
             return;
-          }else{
-            let pid,url;
+          } else {
+            let pid, url;
             let that = this;
 
             pid = that.editedItem._id;
-            url ="/api/project/"+pid+"/member/delete";
-            let memberID=[item._id];
+            url = "/api/project/" + pid + "/member/delete";
+            let memberID = [item._id];
             console.log(index)
-            that.editedItem.membersInfo.splice(index,1);
+            that.editedItem.membersInfo.splice(index, 1);
             console.log(that.editedItem.membersInfo);
             console.log("members")
-            postData(this,url,memberID,()=>{
+            postData(this, url, memberID, () => {
 
               this.$emit('refreshData');
 
@@ -432,7 +545,7 @@
 
         },
 
-        onSave(item){
+        onSave(item) {
           // this.task.createDate = new Date().getTime();
           console.log(item);
 
@@ -447,69 +560,79 @@
           let children = item.children;
           item.children = this.saveChildren(children);
 
-          if(this.progress == 100) {
+          if (this.progress == 100) {
             item.checked = true;
-            item.status ="done";
+            item.status = "done";
           }
 
-          let pid,rid,url;
+          let pid, rid;
 
-          if(this.target =="project"){
+          if (this.target == "project") {
+            if(this.oldPartNumber != item.partNumber){
+              item.history_pn.push({
+                "partNumber":item.partNumber,
+                "date":(new Date()).toLocaleDateString() + " " + (new Date()).toLocaleTimeString()
+              })
+            }
+
             pid = item._id
-            url = "/api/project/"+ pid +"/update";
+            let url = "/api/project/" + pid + "/update";
             delete item._id
-            postData(this,url,item,()=>{
+            postData(this, url, item, () => {
               this.$emit('refreshData');
             })
           }
-          else if(this.target =="task"){
+          else if (this.target == "task") {
             rid = item.reference_id;
             pid = item.projectId;
-            url = "/api/asset/update/"+rid+"/of/"+pid;
-            postData(this,url,item,()=>{
+            let url = "/api/asset/update/" + rid + "/of/" + pid;
+            postData(this, url, item, () => {
               this.$emit('refreshData');
             })
           }
           this.closeDialog();
 
         },
-        saveChildren(children){
-          let pid,rid,result;
-          if(children && children.length>0){
-            pid=children[0].projectId;
-            for(let i =0;i<children.length;i++){
+        saveChildren(children) {
+          let pid, rid, result;
+          if (children && children.length > 0) {
+            pid = children[0].projectId;
+            for (let i = 0; i < children.length; i++) {
 
               let child = children[i];
-              rid=child.reference_id;
+              rid = child.reference_id;
 
-              url = "/api/asset/update/"+rid+"/of/"+pid;
-              if(child.checked == true){
+              let url = "/api/asset/update/" + rid + "/of/" + pid;
+              if (child.checked == true) {
                 result = {
-                  "checked":true,
-                  "status":"done",
+                  "checked": true,
+                  "status": "done",
                 }
-              }else{
+              } else {
                 result = {
-                  "checked":false
+                  "checked": false,
+                  "status": "progress"
                 }
               }
-              postData(this,url,result)
+              postData(this, url, result)
             }
             children = [];
             return children;
-          }else{
+          } else {
             return false;
           }
 
         },
-        closeDialog(){
+        closeDialog() {
           let editedShow = false;
+          this.disable = true;
           console.log(editedShow)
-          this.$emit("changeShow",editedShow)
+          this.$emit('refreshData');
+          this.$emit("changeShow", editedShow)
         },
-        uniqueArray(array, key){
+        uniqueArray(array, key) {
           let result = [array[0]];
-          for(let i = 1; i < array.length; i++){
+          for (let i = 1; i < array.length; i++) {
             let item = array[i];
             let repeat = false;
             for (let j = 0; j < result.length; j++) {
@@ -523,13 +646,78 @@
             }
           }
           return result;
+        },
+
+        fileChange(file, name) {
+          console.log('File:', file);
+          console.log('FileName:', name);
+        },
+
+        sendCommit(){
+          let item = this.editedItem;
+          let commit = {
+            "owner" : this.myInformation._id,
+            "content":this.commit,
+            "date": new Date()
+          };
+          if (this.target == "project") {
+            let pid = item._id;
+            let url = "/api/project/" + pid + "/update";
+
+            postData(this, url, commit, () => {
+              // this.$emit('refreshData');
+            })
+          }
+          else if (this.target == "task") {
+            let pid = item.projectId;
+            let rid = item.reference_id;
+
+            let url = "/api/asset/update/" + rid + "/of/" + pid;
+            postData(this, url, item, () => {
+              // this.$emit('refreshData');
+            })
+          }
+        },
+        deleteTask(model){
+          if(this.target === "project"){
+            let url = "/api/project/"+model._id+"/delete";
+            let t = {
+              "_id":model._id
+            }
+            postData(this,url,t);
+
+            this.closeDialog();
+
+          }
+          else if(this.target === "task"){
+
+          }
         }
 
-      }
+
+
+    }
+
+
 
     }
 </script>
 
 <style scoped>
-
+  .uploader-example {
+    width: 95%;
+    padding: 15px;
+    margin: 15px;
+    font-size: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .4);
+  }
+  .uploader-example .uploader-btn {
+    margin-right: 4px;
+  }
+  .uploader-example .uploader-list {
+    max-height: 440px;
+    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 </style>

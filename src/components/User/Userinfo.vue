@@ -9,7 +9,10 @@
 
             <v-flex xs6>
               <v-layout row wrap>
-
+                <v-flex xs12>
+                  <v-text-field name="name" label="User Name"  value="user.name" v-model="user.name"
+                                class="input-group" required disabled></v-text-field>
+                </v-flex>
                 <v-flex xs12>
                   <v-text-field name="email" type="email" label="Email"  v-model="user.email"
                                 class="input-group testt" required disabled></v-text-field>
@@ -18,13 +21,10 @@
                   <v-select name="sex" label="Sex" v-model="user.sex" class="input-group"
                             :items="sexOption" required disabled></v-select>
                 </v-flex>
-                <v-flex xs12>
-                  <v-text-field name="name" label="User Name"  value="user.name" v-model="user.name"
-                                class="input-group" required disabled></v-text-field>
-                </v-flex>
+
                 <v-flex xs12>
                   <v-text-field name="department" label="Department" value="user.department"
-                                v-model="user.department" class="input-group" required disabled></v-text-field>
+                                v-model="user.department " class="input-group" required disabled></v-text-field>
                 </v-flex>
                 <v-flex xs12>
                   <v-text-field name="phone"  label="Phone" value="Input text"
@@ -36,10 +36,14 @@
             <v-flex xs6>
               <v-layout row wrap justify-center>
                 <v-flex xs12>
-                  <v-avatar size="200px" class="teal">test</v-avatar>
-                </v-flex>
-                <v-flex xs12 >
-                  <v-btn>Change Avatar</v-btn>
+                  <inputFile v-model="file" accept="image/*" :imgSrc="user.avatar" @onChange="fileChange"></inputFile>
+                  <v-btn color="primary"
+                         class="white--text"
+                         @click="uploadAvatar"
+
+                  >
+                  确认上传
+                  <v-icon right dark>cloud_upload</v-icon></v-btn>
                 </v-flex>
               </v-layout>
              </v-flex>
@@ -47,10 +51,10 @@
 
           <v-layout row justify-center>
             <v-flex xs6>
-                <v-btn class="primary" v-on:click="onSave">Save</v-btn>
+              <v-btn v-on:click="cancel">Cancel</v-btn>
             </v-flex>
             <v-flex xs6>
-                <v-btn v-on:click="cancel">Cancel</v-btn>
+                <v-btn class="primary" v-on:click="onSave">Save</v-btn>
             </v-flex>
           </v-layout>
         </v-container>
@@ -61,8 +65,12 @@
 </template>
 
 <script>
+    import InputFile from '../../components/Kanban/InputFile'
     export default {
       name: "userinfo",
+      components:{
+        'inputFile': InputFile
+      },
       data () {
         return {
           user:{
@@ -71,56 +79,93 @@
             sex:"",
             department:"",
             phone:"",
+            avatar:""
           },
 
           sexOption:[
             "male",
             "female"
           ],
+          file:'',
+          maxSize:5120000,
+          thumbnail : null,
+          progress : 0 //上传进度
 
 
         }
       },
       created() {
-
         this.fetchData();
-
-
       },
 
       methods:{
         fetchData() {
-
-          this.$http.get('/api/user/info').then(response => {
-            // get body data
-            this.user = response.data.data;
-          }, error=> {
-            // error callback
-            this.notify(error)
-          });
+          getData(this,'/api/user/info',(data)=>{
+            this.user = data;
+          })
 
         },
         onSave() {
+          let user = this.user;
           console.log(this.user);
+          delete user._id;
+          postData(this,'/api/user/update',user)
 
-          this.$http.post('/api/user/update', {
-            headers:{
-              'Content-type':'application/vnd.api+json',
-            },
-            body: this.user
-          }).then(response => {
-            if(response.data.code != 0) {
-              this.notify(response.data.error);
-            }
-          }, error => {
-            this.notify(error)
-          });
-          // $.post('/api/user/update',JSON.stringify(this.user));
         },
         cancel(){
           console.log("cancel it");
           window.location.reload(true);
-        }
+        },
+        fileChange(file, name) {
+          console.log('File:', file);
+          console.log('FileName:', name);
+          this.file=file;
+        },
+        uploadAvatar(){
+          let file = this.file;
+          console.log("upload",file)
+          // if(file.length==0) return alert("您还未选择头像文件");
+          let url = '/api/user/avatar/upload';
+
+          // if (file) {
+          //   if (file.size>this.maxSize) {
+          //     //todo filter file
+          //     return alert('请选择小于5MB的图片');
+          //   }
+            //filter file, 文件大小,类型等过滤
+            //如果是图片文件
+            // const reader = new FileReader()
+            // const imageUrl = reader.readAsDataURL(file)
+            // img.src = imageUrl //在预览区域插入图片
+
+          let formData = new FormData();
+
+          formData.append('Content-Type', 'multipart/form-data')
+          formData.append('avatar_file', file)
+
+          this.$http.post(url, formData).then(response => {
+            console.log(response)
+          }, error => {
+            // this.notify(error);
+            console.log(error)
+
+          });
+
+
+
+
+        },
+        // uploadProgress (progress, flag) {
+        //   //这里可以通过回调的flag对不同上传域做处理
+        //   this.progress = progress < 100 ? progress : 0;
+        // },
+        // uploadComplete(status, result, flag) {
+        //   if (status == 200) { //
+        //     // this.thumbnail = `d/${result.key}` //七牛域名 + 返回的key 组成文件url
+        //   } else {
+        //     //失败处理
+        //   }
+        // },
       }
     }
 </script>

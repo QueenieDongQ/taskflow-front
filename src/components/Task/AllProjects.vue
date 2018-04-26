@@ -171,10 +171,9 @@
             }
 
           ],
-          loader:null,
           loading:false,
           search:'',
-          myInforamtion:{},
+          myInformation:{},
           users:[],
           items: [],
 
@@ -201,14 +200,7 @@
       },
 
       watch: {
-        loader () {
-          const l = this.loader
-          this[l] = !this[l]
 
-          setTimeout(() => (this[l] = false), 3000)
-
-          this.loader = null
-        }
       },
 
       created(){
@@ -225,25 +217,20 @@
       methods:{
         myInfo(){
           let url = "api/user/info";
-
           getData(this,url,(data)=>{
             this.myInformation=data;
-
           })
-
         },
 
         getUsers(){
           let url ="/api/user/all";
           getData(this,url,(data)=>{
             this.users=data;
-
           })
         },
 
         fetchData(callback = undefined) {
             //get projects data
-
             let bigData = [];
             let url_involved = "/api/project/involved";
             let url_member ="/api/project/involved?type=member"
@@ -269,15 +256,11 @@
               item.modifyDate = new Date(item.modifyDateUTC).format("yyyy-MM-dd hh:mm:ss");
               //transfer owner to ownerName
               let owner_id = item.owner;
-              console.log(owner_id)
               item.ownerName = this.searchUserInfo(owner_id, "name");
-              console.log(item.ownerName)
               item.email = this.searchUserInfo(owner_id, "email");
               item.startDate = this.convertLocalTime(item.startDateUTC);
               item.dueDate = this.convertLocalTime(item.dueDateUTC);
               item.membersInfo = this.getEditedItemMembers(item.members);
-
-
 
               items[i] = item
             }
@@ -347,23 +330,18 @@
 
 
         getEditedItemLabel(labels){
-          let that = this;
-          console.log(labels);
+          let that = this;console.log(labels);
           //只有一个部门 标签
-
           let label = labels[0];
           let myLabels = that.myInformation.labels;
-          console.log(myLabels)
           let v = myLabels.find((item)=>{
             let name = item.name.trim().toLowerCase();
             if(name==label)return item
 
           })
-          console.log(v)
           return {
             "name":label.toUpperCase(),
             "color":v.color
-
           }
         },
 
@@ -399,7 +377,6 @@
                 }
               })
             }
-            console.log(children);
             console.log("children")
             this.editedItem.children = children;
             return  this.editedItem;
@@ -425,7 +402,12 @@
               this.myInformation.department
             ],
             "status":"todo",
-            "children":[]
+            "children":[],
+            "history_pn":[{
+              "partNumber":project.partNumber,
+              "date":new Date().getTime()
+            }],
+            "history_c":[]
           }
           console.log(this.project);
           // this.project.labels =
@@ -485,13 +467,10 @@
           let that =this;
           let pid = that.editedItem._id;
           let members = that.addingMembers;
-          console.log(that.editedIndex);
           let id=[];
           for(let i=0;i<members.length;i++){
             id[i]=members[i]._id;
           }
-          // console.log(id);
-          // console.log(that.editedItem);
 
           let urlAdd = "/api/project/"+pid+"/member/add";
 
@@ -502,7 +481,6 @@
               this.editedItem.members=this.items[that.editedIndex].members;
             });
           });
-          // console.log(this.items);
           this.addMemberShow=false;
         },
 
@@ -519,23 +497,18 @@
               this.items = items;
               this.editedItem.members=this.items[that.editedIndex].members;
             });
-            // that.addMemberShow = false;
           });
         },
 
-        changeLabelName(){
-
-        },
-
-        remove (item) {
-
-          let that = this;
-          let labels = that.allLabels;
-          let index = labels.indexOf(item);
-          labels[index].selected = false;
-          console.log(labels);
-          // this.allLabels = labels;
-        },
+        // remove (item) {
+        //
+        //   let that = this;
+        //   let labels = that.allLabels;
+        //   let index = labels.indexOf(item);
+        //   labels[index].selected = false;
+        //   console.log(labels);
+        //   // this.allLabels = labels;
+        // },
         closeDialog(msg){
           this.editedShow = msg;
           console.log(msg)

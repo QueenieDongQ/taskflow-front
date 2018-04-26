@@ -24,12 +24,11 @@
           </v-flex>
           <v-flex xs12 style="overflow: scroll">
             <tree
-              @fetchData="fetchData"
+              @refreshData="fetchData"
               @click="onClick"
               :model="treelist"
               :blocks="blocks"
-              default-tree-node-name="new node"
-              default-leaf-node-name="new leaf"></tree>
+              ></tree>
           </v-flex>
         </v-layout>
       </v-flex>
@@ -55,7 +54,7 @@
                   :slot="item.reference_id"
                   :key="item.reference_id"
                   style="height:100%;"
-                  :class="{'isDelay':(item.dueDateUTC<today && item.dueDateUTC)}">
+                  :class="{'isDelay':(item.dueDateUTC<today && item.dueDateUTC && item.status !='done')}">
 
                     <v-list>
                       <v-list-tile avatar
@@ -100,6 +99,7 @@
             :editedItem = "editedItem"
             :editedShow = "editedShow"
             :users="users"
+            :myInformation="myInformation"
             v-on:changeShow="closeDialog"
             @refreshData="fetchData"></card>
 
@@ -167,13 +167,11 @@
         }
       },
       created(){
-        this.myInfo();
         this.getUsers();
       },
       mounted(){
-
+        this.myInfo();
         this.fetchData();
-        // this.fetchInterval();
       },
 
       computed:{
@@ -186,7 +184,6 @@
             let block = blocks[i];
 
             block.children=[];
-            // block.projectId = this.projectId;
             //找到desc == null的节点 --- 根节点
             if(block.desc=="root"){
               newArr.push(block);
@@ -195,22 +192,17 @@
               newArr = this.childrenIterator(newArr,block); //找到该父节点
             }
           }
-
           let tree = [{
             "name":"Project",
             "reference_id":"root",
             "children":newArr,
-            "projectId":this.projectId
+            "project":this.projectId
           }]
-
           let treeArr = new Tree(tree);
           return treeArr;
-
         },
 
         filterLists(){
-          // let lists = this.blocks;
-          // console.log(lists);
           let lists = this.getMyBlocks(this.blocks);
           let search = this.search;
           let filterFolder = this.filterFolder;
@@ -234,7 +226,6 @@
               return item;
             }
           });
-
           return newArr;
         },
 
@@ -247,51 +238,67 @@
 
           getData(this,url,(data)=>{
             this.myInformation=data;
-
           })
 
         },
         getUsers(){
           let urlUser = "/api/user/all";
           getData(this,urlUser,(data)=> {
-            //get people data
+            //get all users' data
             this.users = data;
           });
         },
-        fetchInterval(){
-          let that =this;
-          setInterval(function(){
-            that.fetchData();
-          },2000)
-        },
+
         fetchData:function() {
 
-            let url = "/api/project/involved/" + this.projectId + "?assets=1";
+            // let url = "/api/project/involved/" + this.projectId + "?assets=1";
+            //
+            // getData(this, url, (data) => {
+            //   let project = data;
+            //   if (project.assets == undefined) {
+            //     this.blocks = [];
+            //   } else {
+            //     let blocks = project.assets;
+            //
+            //     blocks = blocks.map((item) => {
+            //
+            //         item.startDate = this.convertLocalTime(item.startDateUTC);
+            //         item.dueDate = this.convertLocalTime(item.dueDateUTC);
+            //         item.ownerName = this.searchUserInfo(item.owner,"name");
+            //         item.email = this.searchUserInfo(item.owner,"email");
+            //         // item.labelDetail = this.getEditedItemLabel(item.label)
+            //         item.children = this.getEditedItemChildren("task",item);
+            //
+            //         return item;
+            //     })
+            //     this.blocks = blocks;
+            //   }
+            //   console.log("fetch-DATA")
+            // })
 
-            getData(this, url, (data) => {
-              let project = data;
-              // console.log(project.assets);
-              if (project.assets == undefined) {
-                this.blocks = [];
-              } else {
-                let blocks = project.assets;
+          //post find assets request
+          let url = "/api/asset/find/of/"+this.projectId;
+          let req = {
+            query:{
+              "project":this.projectId
+            }
+          }
+          postData(this,url,req,(data)=>{
+            let blocks = data;
+            console.log(blocks)
+            blocks = blocks.map((item) => {
 
-                blocks = blocks.map((item) => {
-
-                    item.startDate = this.convertLocalTime(item.startDateUTC);
-                    item.dueDate = this.convertLocalTime(item.dueDateUTC);
-                    item.ownerName = this.searchUserInfo(item.owner,"name");
-                    item.email = this.searchUserInfo(item.owner,"email");
-                    item.labelDetail = this.getEditedItemLabel(item.label)
-                    item.children = this.getEditedItemChildren("task",item);
-
-                    return item;
-
-                })
-                this.blocks = blocks;
-              }
+              item.startDate = this.convertLocalTime(item.startDateUTC);
+              item.dueDate = this.convertLocalTime(item.dueDateUTC);
+              item.ownerName = this.searchUserInfo(item.owner,"name");
+              item.children = this.getEditedItemChildren("task",item);
+              return item;
             })
+            this.blocks = blocks;
+          })
+
         },
+
         getMyBlocks(assets){
           let arr = assets.filter((v)=>{
             return v.owner == this.myInformation._id;
@@ -333,8 +340,6 @@
         updateBlock: debounce(function (reference_id, status) {
           let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
           console.log(url)
-          // this.blocks.find(b => b.reference_id === Number(reference_id)).status = status;
-          // console.log(this.blocks);
 
           let block = this.blocks.find( b => b.reference_id === Number(reference_id));
           block.status = status;
@@ -364,6 +369,11 @@
           this.editedIndex = this.items.indexOf(item);
           this.editedItem = Object.assign({}, item);
           this.editedShow = true;
+
+          this.editedItem.email = this.searchUserInfo(item.owner,"email");
+          // this.editedItem.label = this.searchUserInfo(item.owner,"label")
+          // this.editedItem.labelDetail = this.getEditedItemLabel(item.label)
+
           console.log(this.editedItem);
           console.log("edited")
 
@@ -453,6 +463,9 @@
               }
               else if(target == "email"){
                 return  users[i].email;
+              }
+              else if(target == "label"){
+
               }
             }
           }

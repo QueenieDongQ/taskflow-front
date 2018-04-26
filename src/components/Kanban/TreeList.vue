@@ -71,8 +71,6 @@
 
     <div :class="{'tree-margin': model.name !== 'root'}" v-show="expanded" v-if="isFolder">
       <tree-list v-for="model in model.children"
-                 :default-tree-node-name="defaultTreeNodeName"
-                 :default-leaf-node-name="defaultLeafNodeName"
                  :model="model"
                  :key='model.id'>
       </tree-list>
@@ -88,7 +86,14 @@
 
   export default {
     name:"tree-list",
-
+    props: {
+      model: {
+        type: Object
+      },
+      myInformation:{
+        type:Object
+      }
+    },
     data: function () {
       return {
         isHover: false,
@@ -99,23 +104,7 @@
         expanded: true,
         createItem:{},
         nameDialogShow:false
-
       }
-    },
-
-    props: {
-      model: {
-        type: Object
-      },
-      defaultLeafNodeName: {
-        type: String,
-        default: 'New leaf node'
-      },
-      defaultTreeNodeName: {
-        type: String,
-        default: 'New tree node'
-      },
-
     },
 
 
@@ -136,7 +125,6 @@
 
     },
     created(){
-      // console.log(this.model);
     },
     mounted () {
       const vm = this;
@@ -158,7 +146,7 @@
         let model = this.model;
         // console.log(model);
         let rid = this.model.reference_id;
-        let pid = this.model.projectId;
+        let pid = this.model.project;
         let url = "/api/asset/update/"+rid+"/of/"+pid;
         let value ={
           "name":e.target.value,
@@ -170,9 +158,54 @@
         });
       },
       promoteName(isLeaf){
-        let model =this.model;
-        let str=prompt("Enter the task name","Name");
-        this.addChild(isLeaf,model,str);
+        let that = this;
+        let model =that.model;
+        console.log(model)
+        let name=prompt("Enter the task name","Name");
+        if(name!=null && name!=""){
+          this.addChild(isLeaf,model,name);
+        }else{
+          return;
+        }
+      },
+      addChild(isLeaf,model,name) {
+        console.log("add",model)
+        let createItem = {
+          "name": name,
+          "isLeaf": isLeaf,
+        }
+        var node = new TreeNode(createItem)
+        this.model.addChildren(node, true);
+
+        let createDate = new Date().getTime();
+        this.expanded = true;
+        let reference_id = model.reference_id;
+        let desc;
+        if(model.reference_id == "root"){
+          desc = "root";
+        }else{
+          desc = reference_id;
+        }
+        this.createItem = {
+          "name": name,
+          "createDate":createDate,
+          "desc": desc,
+          "isLeaf": isLeaf,
+          "status": "todo",
+          "startDateUTC":"",
+          "dueDateUTC":"",
+          "checked":false,
+          "children":[],
+          "modifyDateUTC": new Date().getTime(),
+          "isread":true,
+        }
+        console.log(this.createItem)
+
+        let url = "/api/asset/create/"+ model.project;
+
+        postData(this,url,this.createItem,()=>{
+          this.$emit("refreshData");
+        })
       },
 
       delNode () {
@@ -180,7 +213,7 @@
         if (window.confirm('Are you sure?')) {
 
           let rid = this.model.reference_id;
-          let pid = this.model.projectId;
+          let pid = this.model.project;
 
           let children = vm.model.children;
           console.log(children)
@@ -196,10 +229,7 @@
           postData(this,url,result,()=>{
 
           })
-
         }
-
-
       },
 
       setEditable () {
@@ -237,43 +267,6 @@
         }
         node.$emit('click', clickModel)
       },
-
-      addChild(isLeaf,model,name) {
-
-        let createDate = new Date().getTime();
-        this.expanded = true;
-        let reference_id = model.reference_id;
-        let desc;
-        if(model.reference_id == "root"){
-          desc=null;
-        }else{
-          desc = reference_id;
-        }
-
-        this.createItem = {
-          "name": name,
-          "createDate":createDate,
-          "projectId": model.projectId,
-          "desc": desc,
-          "isLeaf": isLeaf,
-          "status": "todo",
-          "startDateUTC":"",
-          "dueDateUTC":"",
-          "checked":false,
-
-        }
-        var node = new TreeNode(this.createItem)
-        this.model.addChildren(node, true);
-
-        let url = "/api/asset/create/"+ model.projectId;
-
-        postData(this,url,this.createItem,()=>{
-
-          this.$emit("fetchData");
-        })
-      },
-
-
 
       dragStart(e) {
         if (!this.model.dragDisabled) {
