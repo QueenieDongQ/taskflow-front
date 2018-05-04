@@ -35,7 +35,7 @@
         <div class="node-content" v-if="!editable">
           {{model.name}}
         </div>
-        <input v-else class="vue-tree-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="setUnEditable">
+        <!--<input v-else class="vue-tree-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="setUnEditable">-->
         <div class="operation" v-show="isHover">
           <span title="add tree node" @click.stop.prevent="promoteName(false)" v-if="!model.isLeaf && model.reference_id =='root'">
             <slot name="addTreeNode">
@@ -94,7 +94,7 @@
         type:Object
       }
     },
-    data: function () {
+    data() {
       return {
         isHover: false,
         editable: false,
@@ -103,10 +103,20 @@
         isDragEnterNode: false,
         expanded: true,
         createItem:{},
-        nameDialogShow:false
+        nameDialogShow:false,
       }
     },
 
+    watch: {
+      myInformation: function(value) {
+        if(value!=undefined){
+          this.my_info = value;
+          console.log(this.my_info,"value");
+
+        }
+
+      }
+    },
 
     computed: {
       itemIconClass () {
@@ -121,11 +131,18 @@
         return this.model.children &&
           this.model.children.length
       },
-
-
     },
+
     created(){
+      let that = this;
+
+      setInterval(function () {
+        that.$emit('refresh');
+      },10000)
+      // this.$store.commit('getMyInfo')
+
     },
+
     mounted () {
       const vm = this;
       addHandler(window, 'keyup', function (e) {
@@ -134,33 +151,33 @@
           vm.editable = false
         }
       });
-
-
     },
+
     beforeDestroy () {
       removeHandler(window, 'keyup')
     },
-    methods: {
-      updateName (e) {
-        this.model.changeName(e.target.value);
-        let model = this.model;
-        // console.log(model);
-        let rid = this.model.reference_id;
-        let pid = this.model.project;
-        let url = "/api/asset/update/"+rid+"/of/"+pid;
-        let value ={
-          "name":e.target.value,
-          "modifyDateUTC":new Date().getTime()
-        }
-        postData(this,url,{"name":e.target.value},()=>{
 
-          this.$emit('fetchData');
-        });
-      },
+    methods: {
+      // updateName (e) {
+      //   this.model.changeName(e.target.value);
+      //   let model = this.model;
+      //   // console.log(model);
+      //   let rid = this.model.reference_id;
+      //   let pid = this.model.project;
+      //   let url = "/api/asset/update/"+rid+"/of/"+pid;
+      //   let value ={
+      //     "name":e.target.value,
+      //     "modifyDateUTC":new Date().getTime()
+      //   }
+      //   postData(this,url,{"name":e.target.value},()=>{
+      //
+      //     this.$emit('fetchData');
+      //   });
+      // },
       promoteName(isLeaf){
         let that = this;
+
         let model =that.model;
-        console.log(model)
         let name=prompt("Enter the task name","Name");
         if(name!=null && name!=""){
           this.addChild(isLeaf,model,name);
@@ -169,16 +186,16 @@
         }
       },
       addChild(isLeaf,model,name) {
-        console.log("add",model)
+
         let createItem = {
           "name": name,
           "isLeaf": isLeaf,
         }
         var node = new TreeNode(createItem)
         this.model.addChildren(node, true);
+        this.expanded = true;
 
         let createDate = new Date().getTime();
-        this.expanded = true;
         let reference_id = model.reference_id;
         let desc;
         if(model.reference_id == "root"){
@@ -192,43 +209,47 @@
           "desc": desc,
           "isLeaf": isLeaf,
           "status": "todo",
-          "startDateUTC":"",
-          "dueDateUTC":"",
+          "startDate":"",
+          "dueDate":"",
           "checked":false,
           "children":[],
           "modifyDateUTC": new Date().getTime(),
           "isread":true,
+          "history_c":[],
+          "attachment":[]
         }
         console.log(this.createItem)
 
         let url = "/api/asset/create/"+ model.project;
 
         postData(this,url,this.createItem,()=>{
-          this.$emit("refreshData");
+          this.$emit('refreshData');
         })
       },
 
       delNode () {
         const vm = this
+        console.log(this.model)
         if (window.confirm('Are you sure?')) {
-
+          vm.model.remove();
           let rid = this.model.reference_id;
           let pid = this.model.project;
-
           let children = vm.model.children;
-          console.log(children)
 
           let result=[rid];
           if(children != null){
             for(let i=0;i<children.length;i++){
-              result.push(children.reference_id);
+              result.push(children[i].reference_id);
             }
           }
-          vm.model.remove();
-          let url = "/api/asset/delete/"+rid+"/of/"+pid;
-          postData(this,url,result,()=>{
+          let url;
+          for(let i=0;i<result.length;i++){
+            url = "/api/asset/delete/"+result[i]+"/of/"+pid;
+            postData(this,url,result[i])
+            if(i==result.length-1) this.$emit('refreshData');
 
-          })
+          }
+
         }
       },
 

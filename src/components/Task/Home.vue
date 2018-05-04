@@ -3,12 +3,12 @@
     <v-layout row style="margin: 10px">
 
       <v-flex xs4 style="float:left;margin-right: 10px">
-        <v-card>
-          <inbox :bigData="bigData" :myInformation="myInformation"></inbox>
-        </v-card>
+          <inbox :bigData="bigData"
+                 :users="users"
+                 :myInformation="myInformation"></inbox>
       </v-flex>
 
-      <v-flex xs8 >
+      <v-flex xs8>
         <v-card>
           <v-layout row >
 
@@ -50,6 +50,7 @@
                   <dashboard ref="child"
                              :myInformation="myInformation"
                              :bigData="bigData"
+                             :users="users"
                              style="float:left"
                              :searchID = "searchID"
                              :searchType = "searchType"
@@ -89,7 +90,8 @@
           ],
           searchID:"",
           searchName:"",
-          searchType:"me"
+          searchType:"me",
+          users:[]
         }
       },
       computed:{
@@ -103,6 +105,7 @@
       mounted() {
         let that =this;
         that.myInfo();
+        that.getUsers();
         that.fetchData();
       },
       methods:{
@@ -110,6 +113,12 @@
           let url = "api/user/info";
           getData(this,url,(data)=>{
             this.myInformation=data;
+          })
+        },
+        getUsers(){
+          let url ="/api/user/all";
+          getData(this,url,(data)=>{
+            this.users=data;
           })
         },
         fetchData(callback = undefined) {
@@ -138,19 +147,18 @@
               })
             })
           })
-
         },
+
         getBigData(url,callback){
-          console.log(typeof this);
           getData(this,url,(data)=>{
             callback(data)
           })
         },
+
         fetchInvolved(url){
 
           return new Promise((processBigData)=>{
             this.getBigData(url,(result)=>{
-              console.log(result);
               processBigData(result)
             })
           })
@@ -159,16 +167,21 @@
         initDashboard(){
 
           this.searchID = this.bigData[0]._id;
-          console.log(this.searchID,this.bigData);
 
           this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
         },
+
         fetchAssets(project, callback){
           // let result = projects.map((project)=>{
             let pid = project._id;
-            let url = "/api/project/involved/" + pid + "?assets=1";
-            getData(this,url,(data)=>{
-              project.assets = data.assets;
+            let url = "/api/asset/find/of/"+pid+"?limit=100";
+            let req={
+              query:{
+                "project":pid
+              }
+            }
+            postData(this,url,req,(data)=>{
+              project.assets = data;
               if(callback) {
                 callback()
               }
@@ -181,12 +194,11 @@
           this.searchID = id;
           this.searchName = name;
 
-          console.log(this.searchID )
           this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
         },
+
         getSearchType(type){
           this.searchType = type;
-          console.log(this.searchType )
           this.$refs.child.initData(this.searchID,this.searchType,this.bigData);
         }
 

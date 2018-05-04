@@ -23,8 +23,8 @@
             <a href="#!" class="body-2 black--text">EDIT</a>
           </v-flex>
         </v-layout>
-        <v-list-group v-else-if="item.children" v-model="item.model" no-action>
-          <v-list-tile slot="item" @click="">
+        <v-list-group v-else-if="item.children" v-model="item.model" >
+          <v-list-tile slot="item"  >
             <v-list-tile-action>
               <v-icon>{{ item.model ? item.icon : item['icon-alt'] }}</v-icon>
             </v-list-tile-action>
@@ -49,7 +49,7 @@
             </v-list-tile-content>
           </v-list-tile>
         </v-list-group>
-        <v-list-tile v-else @click="">
+        <v-list-tile v-else @click="jumpToRouter(item)">
           <v-list-tile-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-tile-action>
@@ -84,15 +84,20 @@
       <v-btn icon>
         <v-icon>apps</v-icon>
       </v-btn>
-      <v-btn icon>
-        <v-icon>notifications</v-icon>
+
+      <v-btn icon @click="jumpToHome">
+        <v-badge color="red" style="background-color: rgba(0,0,0,0)">
+          <span slot="badge" v-if="noti_num!=0">{{noti_num}}</span>
+          <v-icon>notifications</v-icon>
+        </v-badge>
       </v-btn>
-      <v-btn icon large onclick="showProfile()">
+      <v-btn icon large @click="">
         <v-avatar size="32px" tile>
           <img
-            src="https://vuetifyjs.com/static/doc-images/logo.svg"
-            alt="Vuetify"
+            :src="myInformation.avatar"
+            v-if="myInformation.avatar"
           >
+          <v-icon>account</v-icon>
         </v-avatar>
       </v-btn>
     </div>
@@ -112,45 +117,54 @@
       dialog: false,
       drawer: false,
       items: [
-        { icon: 'contacts', text: 'Contacts' },
-        { icon: 'history', text: 'Frequently contacted' },
-        { icon: 'content_copy', text: 'Duplicates' },
-        {
-          icon: 'keyboard_arrow_up',
-          'icon-alt': 'keyboard_arrow_down',
-          text: 'Labels',
-          model: true,
-          children: [
-            { icon: 'add', text: 'Create label' }
-          ]
-        },
-        {
-          icon: 'keyboard_arrow_up',
-          'icon-alt': 'keyboard_arrow_down',
-          text: 'More',
-          model: false,
-          children: [
-            { text: 'Import' },
-            { text: 'Export' },
-            { text: 'Print' },
-            { text: 'Undo changes' },
-            { text: 'Other contacts' }
-          ]
-        },
-        { icon: 'settings', text: 'Settings' },
-        { icon: 'chat_bubble', text: 'Send feedback' },
-        { icon: 'help', text: 'Help' },
-        { icon: 'phonelink', text: 'App downloads' },
-        { icon: 'keyboard', text: 'Go to the old version' }
+        { icon: 'dashboard', text: 'Home',link:'' },
+        { icon: 'assignment', text: 'Projects',link:'projects' },
+        { icon: 'account_box', text: 'Account',link:'myspace' },
+
       ],
+      myInformation:{},
+      notification:[],
+      noti_num:0
 
     }),
     props: {
       source: String
     },
+    mounted(){
+      this.myInfo();
+      this.getNotification();
+    },
     methods:{
+      myInfo(){
+        let url = "api/user/info";
 
+        getData(this,url,(data)=>{
+          this.myInformation=data;
+        })
 
+      },
+
+      getNotification(){
+        let url = "/api/notification/find";
+        //此查询不是query式
+        let req={
+          "is_read":false
+        }
+        postData(this,url,req,(data)=>{
+          this.notification = data;
+          this.noti_num = data.length
+        })
+      },
+
+      jumpToHome(){
+        this.$router.push({ path: `/` })
+      },
+
+      jumpToRouter(item){
+        const link = item.link;
+        console.log("link");
+        this.$router.push({path:`/${link}`})
+      }
 
     }
 

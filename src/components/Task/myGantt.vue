@@ -44,7 +44,12 @@
       initGantt () {
         // 从后端获取数据
         console.log('从后端获取数据')
-        let url = "/api/project/involved/"+this.projectId+"?assets=1";
+        let url = "/api/asset/find/of/"+this.projectId;;
+        let req = {
+          query:{
+            "project":this.projectId
+          }
+        }
         let allData ={};
         allData.data=[];
         allData.data.push({
@@ -54,17 +59,16 @@
           "open": true,
           "type": "project"
         }),
-        getData(this,url,(data)=>{
-          let tasks = data.assets;
+        postData(this,url,req,(data)=>{
+          let tasks = data;
 
           if(tasks.length > 0){
             for( let index =0 ; index < tasks.length ; index++){
               let item = tasks[index]
 
               //找到第一层task
-              if(item.parent == null) {
+              if(item.desc === "root") {
 
-                // console.log(item.reference_id)
                 let a = {
                   "id": "tasklist"+item.reference_id,
                   "text": item.name,
@@ -78,13 +82,13 @@
                   "id": item.reference_id,
                   "projectId": this.projectId,
                   "text": item.name,
-                  "startDate": (item.startDateUTC !="") ? new Date(item.startDateUTC): "",
-                  "dueDate": (item.dueDateUTC !="") ? new Date(item.dueDateUTC): "",
-                  "start_date": (item.startDateUTC =="")? moment(this.startDate).startOf('day').toDate()
-                    : this.getStartDate(item.startDateUTC, item.dueDateUTC),
-                  "duration": (item.startDateUTC =="") ? 366 : this.getDuration(
-                    item.startDateUTC,
-                    item.dueDateUTC),
+                  "startDate": (item.startDate !="") ? new Date(item.startDate): "",
+                  "dueDate": (item.dueDate !="") ? new Date(item.dueDate): "",
+                  "start_date": (item.startDate =="")? moment(this.startDate).startOf('day').toDate()
+                    : this.getStartDate(item.startDate, item.dueDate),
+                  "duration": (item.startDate =="") ? 366 : this.getDuration(
+                    item.startDate,
+                    item.dueDate),
                   "startDueStatus": "",
                   "type": "task",
                   "status": "progress",
@@ -96,10 +100,10 @@
                   "deleted": false
                 })
 
-                //找到该task子目录
+                //找到该task子目录  push到该task的后面
                 for(let i=0;i<tasks.length;i++){
                   let task = tasks[i];
-                  if(task.parent != item.reference_id){
+                  if(task.desc != item.reference_id){
 
                     continue;
 
@@ -109,13 +113,13 @@
                       "id": task.reference_id,
                       "projectId": this.projectId,
                       "text": task.name,
-                      "startDate": (task.startDateUTC !="") ? new Date(task.startDateUTC): "",
-                      "dueDate": (task.dueDateUTC !="") ? new Date(task.dueDateUTC): "",
-                      "start_date": (task.startDateUTC =="")? moment(this.startDate).startOf('day').toDate()
-                : this.getStartDate(task.startDateUTC, task.dueDateUTC),
-                      "duration": (task.startDateUTC =="") ? 366 : this.getDuration(
-                              task.startDateUTC,
-                              task.dueDateUTC),
+                      "startDate": (task.startDate !="") ? new Date(task.startDate): "",
+                      "dueDate": (task.dueDate !="") ? new Date(task.dueDate): "",
+                      "start_date": (task.startDate =="")? moment(this.startDate).startOf('day').toDate()
+                : this.getStartDate(task.startDate, task.dueDate),
+                      "duration": (task.startDate =="") ? 366 : this.getDuration(
+                              task.startDate,
+                              task.dueDate),
                       "startDueStatus": "",
                       "type": "task",
                       "status": "progress",
@@ -130,6 +134,8 @@
                     console.log(allData);
                   }
                 }
+              }else{
+                continue;
               }
             }
           }

@@ -80,7 +80,7 @@
         type: String
       },
       placeholder: {
-        default: '点击或拖拽选择图片',
+        default: '点击或拖拽选择文件',
         type: String
       },
       value: {

@@ -27,11 +27,11 @@
                     <v-icon class="">folder</v-icon>{{ props.item.name }}
                 </router-link>
               </span>
-              <v-chip small outline color="green" v-if="props.item.startDate!=null">{{ props.item.startDate }}</v-chip>
-              <v-chip small outline color="red" v-if="props.item.dueDate!=null" >{{ props.item.dueDate }}</v-chip>
+              <v-chip small outline color="green" v-if="props.item.startDate!=''">{{ props.item.startDate}}</v-chip>
+              <v-chip small outline color="red" v-if="props.item.dueDate !=''" >{{ props.item.dueDate}}</v-chip>
             </td>
             <td class="text-xs-right">{{ props.item.ownerName }}</td>
-            <td class="text-xs-right">{{ props.item.localDate }}</td>
+            <td class="text-xs-right">{{props.item.createDate | formatDate }}</td>
             <!--<td class="text-xs-right"><span v-if="props.item.modifyDateUTC >0 ">{{ props.item.modifyDate }}</span></td>-->
             <td class="justify-center layout px-0">
               <v-btn icon ripple @click="editItem(props.item)">
@@ -93,7 +93,8 @@
                   :overlay="false"
                   max-width="500px"
                   scrollable class="editDialog">
-          <card target="project"
+          <card ref="card"
+                target="project"
                 :myInformation="myInformation"
                 :editedItem = "editedItem"
                 :editedShow = "editedShow"
@@ -108,21 +109,8 @@
 </template>
 
 <script>
-  Date.prototype.format = function (fmt) { //author: meizz
-    var o = {
-      "M+": this.getMonth() + 1, //月份
-      "d+": this.getDate(), //日
-      "h+": this.getHours(), //小时
-      "m+": this.getMinutes(), //分
-      "s+": this.getSeconds(), //秒
-      "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-      "S": this.getMilliseconds() //毫秒
-    };
-    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-    for (var k in o)
-      if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-    return fmt;
-  }
+
+  import {formatDate} from '../../utils/date'
   import Card from '../Kanban/Card'
     export default {
       name: "all-task-lists",
@@ -195,6 +183,16 @@
 
         }
       },
+      filters: {
+        formatDate(time) {
+          var date = new Date(time);
+          return formatDate(date, "yyyy-MM-dd hh:mm");
+        },
+        formatDate2(time){
+          var date = new Date(time);
+          return formatDate(date, "yyyy-MM-dd");
+        }
+      },
       computed: {
 
       },
@@ -206,11 +204,9 @@
       created(){
         this.myInfo();
         this.getUsers();
-        console.log("created")
       },
       mounted() {
         this.fetchData();
-        console.log("mounted")
 
       },
 
@@ -250,34 +246,16 @@
           let items = data;
             for (let i = 0; i < items.length; i++) {
               let item = items[i];
-              //transfer time stick to local time
-              let localDate = this.convertLocalTime(item.createDate);
-              item.localDate = localDate;
-              item.modifyDate = new Date(item.modifyDateUTC).format("yyyy-MM-dd hh:mm:ss");
+
               //transfer owner to ownerName
               let owner_id = item.owner;
               item.ownerName = this.searchUserInfo(owner_id, "name");
               item.email = this.searchUserInfo(owner_id, "email");
-              item.startDate = this.convertLocalTime(item.startDateUTC);
-              item.dueDate = this.convertLocalTime(item.dueDateUTC);
               item.membersInfo = this.getEditedItemMembers(item.members);
 
               items[i] = item
             }
             return items;
-        },
-
-        convertLocalTime(time){
-          if(time==0 || time =="" || time ==null){
-            return null;
-          }else{
-            let date = new Date(time);
-            let year = date.getFullYear(); // 获取完整的年份(4位,1970)
-            let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
-            let day = date.getDate(); // 获取日(1-31)
-
-            return year+"-"+month+"-"+day;
-          }
         },
 
         searchUserInfo(id,target){
@@ -309,8 +287,9 @@
           this.editedIndex = this.items.indexOf(item);
           this.editedItem = Object.assign({}, item);
           this.editedShow = true
-          this.editedItem.children = this.getEditedItemChildren("project",item);
           this.editedItem.labelDetail = this.getEditedItemLabel(item.label);
+          this.getEditedItemChildren(item);
+          // this.$refs.card.getEditedItemChildren();
           console.log(this.editedItem);
           console.log("edited")
         },
@@ -345,44 +324,41 @@
           }
         },
 
-        getEditedItemChildren(target,current){
-
-          let children;
-          let pid;
+        getEditedItemChildren(item){
+          // let item =this.editedItem;
+          // let target = this.target;
+          let target = "project"
+          let pid,req;
 
           if(target === "project"){
-            pid = current._id;
+            pid = item._id;
+            req = {
+              'query': {
+                'desc': "root"
+              }
+            }
           }
           else if(target === "task"){
-            pid = current.projectId;
+            pid = item.project;
+            req={
+              'query': {
+                'desc': item.reference_id
+              }
+            }
           }
 
-          let url="api/project/show/"+ pid +"?assets=1";
-          getData(this,url,(data)=>{
-            let assets = data.assets;
-            if(target =="project"){
-              children = assets.filter((item)=>{
-                if(item.desc == "root") {
-                  item.ownerName = this.searchUserInfo(item.owner,"name");
-                  return item;
-                }
-              })
-            }
+          let url="/api/asset/find/of/"+ pid +"?limit=200";
 
-            if(target == "task"){
-              children = assets.filter((item) => {
-                if (item.desc == current.reference_id ) {
-                  item.ownerName = this.searchUserInfo(item.owner,"name");
-                  return item;
-                }
-              })
-            }
-            console.log("children")
-            this.editedItem.children = children;
-            return  this.editedItem;
+          postData(this,url,req,(data)=>{
+            let result = data.map((v)=>{
+              v.ownerName  =this.searchUserInfo(v.owner,"name");
+              return  v;
+            })
+            this.editedItem.children = result;
+            return data;
           })
-
         },
+
         createProject(){
           // let that = this;
           let project =this.project;
@@ -407,10 +383,9 @@
               "partNumber":project.partNumber,
               "date":new Date().getTime()
             }],
-            "history_c":[]
+            "history_c":[],
+            "attchment":[]
           }
-          console.log(this.project);
-          // this.project.labels =
 
           let urlCreate = "/api/project/create";
           postData(this,urlCreate,this.project,()=>{
@@ -432,8 +407,6 @@
           let item = that.editedItem;
           delete item._id;
           delete item.membersInfo;
-
-          console.log(item);
 
           if (that.editedIndex > -1) {
             Object.assign(that.items[that.editedIndex], item);
@@ -500,15 +473,6 @@
           });
         },
 
-        // remove (item) {
-        //
-        //   let that = this;
-        //   let labels = that.allLabels;
-        //   let index = labels.indexOf(item);
-        //   labels[index].selected = false;
-        //   console.log(labels);
-        //   // this.allLabels = labels;
-        // },
         closeDialog(msg){
           this.editedShow = msg;
           console.log(msg)

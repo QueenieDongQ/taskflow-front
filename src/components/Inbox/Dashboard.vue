@@ -37,11 +37,11 @@
         },
         width: {
           type: String,
-          default: '500px'
+          default: '550px'
         },
         height: {
           type: String,
-          default: '550px'
+          default: '500px'
         },
         bigData:{
           type:Array,
@@ -56,7 +56,9 @@
         searchType:{
           type:String,
         },
-
+        users:{
+          type:Array,
+        },
         myInformation:{
           type:Object,
         }
@@ -96,27 +98,13 @@
       computed:{
 
       },
+      created(){
+      },
       mounted() {
-        // this.initData();
-        // console.log(this.bigData);
-        // let a = [{
-        //   "_id":this.searchID,
-        //   "assets":[
-        //   {
-        //     "name":123,
-        //     "status":"todo",
-        //     "owner":"5acb47dc1696da000d7b974b",
-        //   }
-        // ]
-        //
-        // }]
-        // this.filterData(a)
+
         this.initChart();
       },
-      // updated: function () {
-      //   console.log('updated 钩子执行...');
-      //   console.log(this.bigData)
-      // },
+
       beforeDestroy() {
         if (!this.chart) {
           return
@@ -124,7 +112,33 @@
         this.chart.dispose()
         this.chart = null
       },
+
       methods: {
+
+
+        searchUserInfo(id,target){
+
+          let that = this;
+          let users = that.users;
+
+          for(let i=0;i<users.length;i++){
+            if(id == users[i]._id){
+              if(target == "name"){
+                // console.log(users[i].name)
+                return users[i].name;
+              }
+              else if(target == "avater"){
+                return  users[i].avater;
+              }
+              else if(target == "department"){
+                return  users[i].department;
+              }
+              else if(target == "email"){
+                return  users[i].email;
+              }
+            }
+          }
+        },
 
         initData(searchID,searchType,bigData){
           let that = this;
@@ -137,8 +151,6 @@
         },
 
         filterData(searchID,searchType,data){
-
-          console.log(data)
 
           let arr1=[],arr2=[];
           arr1 = data.find((item)=>{
@@ -153,9 +165,10 @@
                 break;
 
               case "department":
+                let dep = this.myInformation.department;
                 arr2 = assets.filter((v)=>{
-                  let dep = this.myInformation.department;
-                  if(v.label.indexOf(dep)>-1) {
+                  let this_dep = this.searchUserInfo(v.owner,"department");
+                  if(this_dep===dep) {
                     return v;
                   }
                 })
@@ -179,8 +192,7 @@
             }
             else if(item.status=="progress"){
               s_progress +=1;
-              console.log(item.dueDateUTC)
-              if(today>item.dueDateUTC && item.dueDateUTC !=""){
+              if(today>new Date(item.dueDate) && item.dueDate !=""){
 
                 s_delay +=1;
               }
@@ -189,19 +201,18 @@
               s_done +=1;
             }
           }
-          console.log(s_todo +"+"+s_progress+"+"+s_done)
+
           this.result.seriesData[0].value = s_todo;
           this.result.seriesData[1].value = s_progress;
           this.result.seriesData[2].value = s_done;
-
           this.delay = s_delay;
-          this.initChart();
 
+          this.initChart();
         },
+
         initChart(){
           this.chart = echarts.init(document.getElementById(this.id))
           let data = this.result;
-          console.log("chart")
           this.chart.setOption(
             {title : {
                 text: '任务完成度',

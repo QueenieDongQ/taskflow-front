@@ -17,22 +17,23 @@
 
 
     <v-layout row>
-      <v-flex xs3>
+      <v-flex xs2>
         <v-layout row wrap>
           <v-flex xs12>
             <v-btn @click="filterFolder =''">Show All Task</v-btn>
           </v-flex>
           <v-flex xs12 style="overflow: scroll">
             <tree
-              @refreshData="fetchData"
               @click="onClick"
               :model="treelist"
               :blocks="blocks"
-              ></tree>
+              :myInformation="myInformation"
+              @refresh="fetchData"
+            ></tree>
           </v-flex>
         </v-layout>
       </v-flex>
-      <v-flex xs9>
+      <v-flex xs10>
         <v-container fluid>
           <v-layout row wrap>
             <v-flex xs12>
@@ -43,7 +44,7 @@
                             single-line
                             hide-details
                             class="search"
-                            ></v-text-field>
+              ></v-text-field>
 
             </v-flex>
             <v-divider></v-divider>
@@ -56,31 +57,30 @@
                   style="height:100%;"
                   :class="{'isDelay':(item.dueDateUTC<today && item.dueDateUTC && item.status !='done')}">
 
-                    <v-list>
-                      <v-list-tile avatar
-                                   ripple>
-                        <v-list-tile-content>
+                  <v-list>
+                    <v-list-tile avatar
+                                 ripple>
+                      <v-list-tile-content>
                         <v-list-tile-title>
                           {{ item.name }}
                         </v-list-tile-title>
-                          <v-spacer/>
-                          <v-list-tile-sub-title v-if="item.startDate ">
-                            Start:{{item.startDate}}
-                          </v-list-tile-sub-title>
-                          <v-list-tile-sub-title v-if="item.dueDate" >
-                            Due:{{item.dueDate}}
+                        <v-spacer/>
+                        <v-list-tile-sub-title v-if="item.startDate ">
+                          Start:{{item.startDate}}
+                        </v-list-tile-sub-title>
+                        <v-list-tile-sub-title v-if="item.dueDate" >
+                          Due:{{item.dueDate}}
+                        </v-list-tile-sub-title>
+                      </v-list-tile-content>
+                      <v-list-tile-action >
 
-                          </v-list-tile-sub-title>
-                        </v-list-tile-content>
-                        <v-list-tile-action >
-
-                          <v-btn icon ripple @click="editItem(item)">
-                           <v-icon color="grey lighten-1">info</v-icon>
-                          </v-btn>
-                          <!--<v-icon ><i class="material-icons" color="red">warning</i></v-icon>-->
-                        </v-list-tile-action>
-                      </v-list-tile>
-                    </v-list>
+                        <v-btn icon ripple @click="editItem(item)">
+                          <v-icon color="grey lighten-1">info</v-icon>
+                        </v-btn>
+                        <!--<v-icon ><i class="material-icons" color="red">warning</i></v-icon>-->
+                      </v-list-tile-action>
+                    </v-list-tile>
+                  </v-list>
 
                 </v-card>
               </kanban>
@@ -95,7 +95,8 @@
               :overlay="false"
               max-width="500px"
               scrollable class="editDialog">
-      <card target="task"
+      <card ref="card"
+            target="task"
             :editedItem = "editedItem"
             :editedShow = "editedShow"
             :users="users"
@@ -122,226 +123,175 @@
     props: ['projectId'],
     components:{
 
-        'kanban':Kanban,
-        'card':Card,
-        // 'tree':VueTreeList,
-        'tree':TreeList
-      },
+      'kanban':Kanban,
+      'card':Card,
+      'tree':TreeList
+    },
 
-      data(){
-        return{
-          today:new Date().getTime(),
-          search:"",
-          newTaskShow:false,
-          newTask:{},
-          dialog2:false,
-          statuses:[
-           "todo","progress","done"
-          ],
-          blocks:[],
-          editedInfo:[],
-          editedItem:{},
-          editedShow:false,
+    data(){
+      return{
+        today:new Date().getTime(),
+        search:"",
+        newTaskShow:false,
+        newTask:{},
+        dialog2:false,
+        statuses:[
+          "todo","progress","done"
+        ],
+        blocks:[],
+        editedInfo:[],
+        editedItem:{},
+        editedShow:false,
 
-          items: [
-            {
-              title: 'Click Me'
-            },
-            {
-              title: 'Click Me'
-            },
-            {
-              title: 'Click Me'
-            },
-            {
-              title: 'Click Me 2'
+        items: [
+          {
+            title: 'Click Me'
+          },
+          {
+            title: 'Click Me'
+          },
+          {
+            title: 'Click Me'
+          },
+          {
+            title: 'Click Me 2'
+          }
+        ],
+        disable:false,
+        users:[],
+        addingMembers:[],
+        addMemberShow:false,
+        filterFolder:"",
+        myInformation:{}
+
+      }
+    },
+    created(){
+      this.getUsers();
+    },
+    mounted(){
+      this.myInfo();
+      this.fetchData();
+
+    },
+
+    computed:{
+
+      treelist(){
+        let blocks = this.blocks;
+        let newArr =[];
+
+        let rootArr = blocks.filter((v)=>{
+          return v.desc==="root"
+        })
+        if(rootArr.length!=0){
+          let n = rootArr.length;
+          rootArr.forEach((root)=>{
+            root.children =[];
+            let childArr = blocks.filter((v)=>{
+              return v.desc===root.reference_id;
+            })
+            if(childArr.length!=0){
+              root.children=childArr;
             }
-          ],
-          disable:false,
-          users:[],
-          addingMembers:[],
-          addMemberShow:false,
-          filterFolder:"",
-          myInformation:{}
-
+            n -=1;
+            if(n==0){
+              newArr = rootArr
+            }
+          })
         }
+        let tree = [{
+          "name":"Project",
+          "reference_id":"root",
+          "children":newArr,
+          "project":this.projectId
+        }]
+        let treeArr = new Tree(tree);
+        return treeArr;
       },
-      created(){
-        this.getUsers();
-      },
-      mounted(){
-        this.myInfo();
-        this.fetchData();
-      },
 
-      computed:{
+      filterLists(){
+        let lists = this.blocks;
+        // let lists = this.getMyBlocks(this.blocks);
+        let search = this.search;
+        let filterFolder = this.filterFolder;
+        search =search.trim().toLowerCase();
+        let newArr = [];
 
-        treelist(){
-          let blocks = this.blocks;
-          let newArr =[];
-          for(let i = 0;i < blocks.length;i++){
-
-            let block = blocks[i];
-
-            block.children=[];
-            //找到desc == null的节点 --- 根节点
-            if(block.desc=="root"){
-              newArr.push(block);
-            }else{
-             //有desc
-              newArr = this.childrenIterator(newArr,block); //找到该父节点
-            }
-          }
-          let tree = [{
-            "name":"Project",
-            "reference_id":"root",
-            "children":newArr,
-            "project":this.projectId
-          }]
-          let treeArr = new Tree(tree);
-          return treeArr;
-        },
-
-        filterLists(){
-          let lists = this.getMyBlocks(this.blocks);
-          let search = this.search;
-          let filterFolder = this.filterFolder;
-          search =search.trim().toLowerCase();
-          let newArr = [];
-
-          if(filterFolder !=""){
-            newArr = lists.filter((item)=>{
-              return item.desc === filterFolder;
-            })
-          }else{
-            newArr = lists;
-          }
-          if( !search ){
-            return newArr;
-          }
-
-          newArr = newArr.filter(function (item) {
-            let index = item.name.trim().toLowerCase().indexOf(search);
-            if( index !== -1){
-              return item;
-            }
-          });
+        if(filterFolder !=""){
+          newArr = lists.filter((item)=>{
+            return item.desc === filterFolder;
+          })
+        }else{
+          newArr = lists;
+        }
+        if( !search ){
           return newArr;
-        },
+        }
 
+        newArr = newArr.filter(function (item) {
+          let index = item.name.trim().toLowerCase().indexOf(search);
+          if( index !== -1){
+            return item;
+          }
+        });
+        return newArr;
+      },
+    },
+
+    methods:{
+      myInfo(){
+        let url = "api/user/info";
+        getData(this,url,(data)=>{
+          this.myInformation=data;
+        })
       },
 
-      methods:{
+      getUsers(){
+        let urlUser = "/api/user/all";
+        getData(this,urlUser,(data)=> {
+          //get all users' data
+          this.users = data;
+        });
+      },
 
-        myInfo(){
-          let url = "api/user/info";
-
-          getData(this,url,(data)=>{
-            this.myInformation=data;
-          })
-
-        },
-        getUsers(){
-          let urlUser = "/api/user/all";
-          getData(this,urlUser,(data)=> {
-            //get all users' data
-            this.users = data;
-          });
-        },
-
-        fetchData:function() {
-
-            // let url = "/api/project/involved/" + this.projectId + "?assets=1";
-            //
-            // getData(this, url, (data) => {
-            //   let project = data;
-            //   if (project.assets == undefined) {
-            //     this.blocks = [];
-            //   } else {
-            //     let blocks = project.assets;
-            //
-            //     blocks = blocks.map((item) => {
-            //
-            //         item.startDate = this.convertLocalTime(item.startDateUTC);
-            //         item.dueDate = this.convertLocalTime(item.dueDateUTC);
-            //         item.ownerName = this.searchUserInfo(item.owner,"name");
-            //         item.email = this.searchUserInfo(item.owner,"email");
-            //         // item.labelDetail = this.getEditedItemLabel(item.label)
-            //         item.children = this.getEditedItemChildren("task",item);
-            //
-            //         return item;
-            //     })
-            //     this.blocks = blocks;
-            //   }
-            //   console.log("fetch-DATA")
-            // })
-
-          //post find assets request
-          let url = "/api/asset/find/of/"+this.projectId;
-          let req = {
-            query:{
-              "project":this.projectId
-            }
+      fetchData:function() {
+        console.log("fetch");
+        let url = "/api/asset/find/of/"+this.projectId+"?limit=100";
+        let req = {
+          query:{
+            "project":this.projectId
           }
-          postData(this,url,req,(data)=>{
-            let blocks = data;
-            console.log(blocks)
-            blocks = blocks.map((item) => {
-
-              item.startDate = this.convertLocalTime(item.startDateUTC);
-              item.dueDate = this.convertLocalTime(item.dueDateUTC);
-              item.ownerName = this.searchUserInfo(item.owner,"name");
-              item.children = this.getEditedItemChildren("task",item);
-              return item;
-            })
-            this.blocks = blocks;
+        }
+        postData(this,url,req,(data)=>{
+          let blocks = data;
+          blocks = blocks.map((item) => {
+            item.ownerName = this.searchUserInfo(item.owner,"name");
+            return item;
           })
+          this.blocks = blocks;
+        })
+      },
 
-        },
+      getMyBlocks(assets){
+        let arr = assets.filter((v)=>{
+          return v.owner == this.myInformation._id;
+        })
+        return arr;
+      },
 
-        getMyBlocks(assets){
-          let arr = assets.filter((v)=>{
-            return v.owner == this.myInformation._id;
-          })
-          return arr;
-        },
 
-        convertLocalTime(time){
-          if(time==0 || time ==""){
-            return null;
-          }else{
-            let date = new Date(time);
-            let year = date.getFullYear(); // 获取完整的年份(4位,1970)
-            let month = date.getMonth()+1; // 获取月份(0-11,0代表1月,用的时候记得加上1)
-            let day = date.getDate(); // 获取日(1-31)
+      //拖动看板card 更新数据
+      updateBlock: debounce(function (reference_id, status) {
 
-            return year+"-"+month+"-"+day;
-          }
-        },
+        let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
 
-        //用于 树 结构的查找子文件
-        childrenIterator(arr,block) {
-
-          arr.map((obj)=>{
-            if(obj.reference_id == block.desc){
-              if(block.deps!="root"){
-               block.children=[];
-              }
-              obj.children.push(block);
-
-            }else{
-              this.childrenIterator(obj.children,block);
-            }
-          });
-          return arr;
-        },
-
-        //拖动看板card 更新数据
-        updateBlock: debounce(function (reference_id, status) {
-          let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
-          console.log(url)
-
-          let block = this.blocks.find( b => b.reference_id === Number(reference_id));
+        let block = this.blocks.find( b => b.reference_id === Number(reference_id));
+        if(block.owner!=this.myInformation._id) {
+          alert("对不起，你不是该任务的所有者，没法更改任务状态！");
+          this.fetchData();
+          // return false;
+        }else{
           block.status = status;
 
           if(status=="done"){
@@ -349,144 +299,154 @@
           }else{
             block.checked = false;
           }
-          if(block.desc ==null || block.desc==undefined) block.desc="root";
-          console.log(block);
+          delete block._id,block.reference_id,block.project;
+          block.children=[];
           postData(this,url,block)
-        }, 500),
-
-        // 点击树结构的文件夹，找到它的下一层 并在看板中筛选出子文件
-        onClick(model) {
-          // console.log(model)
-          let pid = model.reference_id;
-          if(pid =="root"){
-            this.filterFolder = "root";
-          }else{
-            this.filterFolder = pid;
-          }
-        },
-
-        editItem(item) {
-          this.editedIndex = this.items.indexOf(item);
-          this.editedItem = Object.assign({}, item);
-          this.editedShow = true;
-
-          this.editedItem.email = this.searchUserInfo(item.owner,"email");
-          // this.editedItem.label = this.searchUserInfo(item.owner,"label")
-          // this.editedItem.labelDetail = this.getEditedItemLabel(item.label)
-
-          console.log(this.editedItem);
-          console.log("edited")
-
-        },
-        getEditedItemChildren(target,current){
-
-          let children;
-          let pid;
-
-          if(target === "project"){
-            pid = current._id;
-          }
-          else if(target === "task"){
-            pid = current.projectId;
-          }
-
-          let url="api/project/show/"+ pid +"?assets=1";
-          getData(this,url,(data)=>{
-            let assets = data.assets;
-            if(target =="project"){
-              children = assets.filter((item)=>{
-                if(item.desc == "root") {
-                  item.ownerName = this.searchUserInfo(item.owner,"name");
-                  return item;
-                }
-              })
-            }
-
-            if(target == "task"){
-              children = assets.filter((item) => {
-                if (item.desc == current.reference_id ){
-                  item.ownerName = this.searchUserInfo(item.owner,"name");
-                  return item;
-                }
-              })
-            }
-
-            this.editedItem.children = children;
-            return  this.editedItem;
-          })
-
-        },
-        getEditedItemMembers(members){
-          let arr=[];
-          if(members.length !=0){
-            for (let i = 0; i < members.length; i++) {
-              let memberID = members[i];
-              let memberName = this.searchUserInfo(memberID, "name");
-              let avater = this.searchUserInfo(memberID, "avater");
-              arr[i] = {"_id": memberID, "name": memberName, "avater": avater};
-            }
-          }
-          return arr;
-        },
-        getEditedItemLabel(labels){
-          let that = this;
-          //只有一个部门 标签
-
-          let label = labels[0];
-          let myLabels = that.myInformation.labels;
-          let v = myLabels.find((item)=>{
-            let name = item.name.trim().toLowerCase();
-            if(name==label){
-
-              return item
-            }
-          })
-          return {
-                "name":label.toUpperCase(),
-                 "color":v.color
-
-              }
-        },
-        searchUserInfo(id,target){
-          let that = this;
-          let users = that.users;
-
-          for(let i=0;i<users.length;i++){
-            if(id == users[i]._id){
-              // console.log(id)
-              if(target == "name"){
-                // console.log(users[i].name)
-                return users[i].name;
-              }
-              else if(target == "avater"){
-                return  users[i].avater;
-              }
-              else if(target == "email"){
-                return  users[i].email;
-              }
-              else if(target == "label"){
-
-              }
-            }
-          }
-        },
-
-        enterGantt(){
-          let projectId = this.projectId;
-          this.$router.push({ path: `/gantt/${projectId}` }) // -> /gantt/:projectId
-        },
-
-
-        closeDialog(msg){
-          this.editedShow = msg;
-          console.log(msg)
-          console.log("changeshow")
         }
 
+      }, 500),
+
+      // 点击树结构的文件夹，找到它的下一层 并在看板中筛选出子文件
+      onClick(model) {
+        // console.log(model)
+        let pid = model.reference_id;
+        if(pid =="root"){
+          this.filterFolder = "root";
+        }else{
+          this.filterFolder = pid;
+        }
+      },
+
+      editItem(item) {
+        this.editedIndex = this.items.indexOf(item);
+        this.editedItem = Object.assign({}, item);
+        this.editedShow = true;
+
+        this.editedItem.email = this.searchUserInfo(item.owner,"email");
+        this.getEditedItemChildren(item);
+
+        this.editedItem.labelDetail = this.getEditedItemLabel(item.owner)
+
+        console.log(this.editedItem);
+        console.log("edited")
+      },
+
+      //仅用于Card中 Checklist的中项目  查找current子项
+      getEditedItemChildren(item){
+        // let item =this.editedItem;
+        // let target = this.target;
+        let target = "task";
+        let pid,req;
+
+        if(target === "project"){
+          pid = item._id;
+          req = {
+            'query': {
+              'desc': "root"
+            }
+          }
+        }
+
+        else if(target === "task"){
+          pid = item.project;
+          req={
+            'query': {
+              'desc': item.reference_id
+            }
+          }
+        }
+        let url="/api/asset/find/of/"+ pid +"?limit=200";
+        postData(this,url,req,(data)=>{
+          let result = data.map((v)=>{
+            v.ownerName  =this.searchUserInfo(v.owner,"name");
+            return  v;
+          })
+          this.editedItem.children = result;
+          return data;
+        })
+
+      },
+      getEditedItemMembers(members){
+        let arr=[];
+        if(members.length !=0){
+          for (let i = 0; i < members.length; i++) {
+            let memberID = members[i];
+            let memberName = this.searchUserInfo(memberID, "name");
+            let avater = this.searchUserInfo(memberID, "avater");
+            arr[i] = {"_id": memberID, "name": memberName, "avater": avater};
+          }
+        }
+        return arr;
+      },
+      getEditedItemLabel(owner){
+        let that = this;
+        //只有一个部门 标签
+        let labels = that.myInformation.labels;
+        let department = that.myInformation.department;
+        let v = labels.find((item)=>{
+          let name = item.name.trim().toLowerCase();
+          if(name==department){
+
+            return item
+          }
+        })
+        return {
+          "name":department.toUpperCase(),
+          "color":v.color
+        }
+      },
+
+      searchUserInfo(id,target){
+        let that = this;
+        let users = that.users;
+
+        for(let i=0;i<users.length;i++){
+          if(id == users[i]._id){
+            // console.log(id)
+            if(target === "name"){
+              // console.log(users[i].name)
+              return users[i].name;
+            }
+            else if(target === "avater"){
+              return  users[i].avater;
+            }
+            else if(target === "email"){
+              return  users[i].email;
+            }
+            else if(target === "label"){
+
+            }
+          }
+        }
+      },
+
+      //用于 树 结构的查找子文件
+      childrenIterator(arr,block) {
+        arr.map((obj)=>{
+          if(obj.reference_id == block.desc){
+            if(block.desc!="root"){
+              block.children=[];
+            }
+            obj.children.push(block);
+          }else{
+            this.childrenIterator(obj.children,block);
+          }
+        });
+        return arr;
+      },
+
+      enterGantt(){
+        let projectId = this.projectId;
+        this.$router.push({ path: `/gantt/${projectId}` }) // -> /gantt/:projectId
+      },
 
 
+      closeDialog(msg){
+        this.editedShow = msg;
+        console.log(msg)
+        console.log("changeshow")
       }
-
+    }
 
   }
 </script>

@@ -1,5 +1,4 @@
-export default {
-  [CURRENT_ACCOUNT](state){
-    
-  }
+const mutations = {
+
+
 }

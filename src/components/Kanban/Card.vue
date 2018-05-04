@@ -68,7 +68,7 @@
         </v-flex>
         <v-flex xs2>
           <v-tooltip bottom>
-            <v-avatar slot="activator"><img src=""></v-avatar>
+            <v-avatar slot="activator"><img ></v-avatar>
             <span> Name:{{editedItem.ownerName}}</span><br/>
             <span> Email:{{editedItem.email}}</span>
           </v-tooltip>
@@ -91,14 +91,14 @@
               <v-date-picker v-model="editedItem.startDate" no-title scrollable>
                 <v-spacer></v-spacer>
                 <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
-                <v-btn flat color="primary" @click="editedItem.startDate =null">Clear</v-btn>
+                <v-btn flat color="primary" @click="editedItem.startDate =''">Clear</v-btn>
               </v-date-picker>
             </v-menu>
           </v-subheader>
         </v-flex>
 
         <v-flex xs3>
-          <v-chip color="success" v-if="editedItem.startDate!=null" >{{editedItem.startDate}}</v-chip>
+          <v-chip color="success" v-if="editedItem.startDate!=''" >{{editedItem.startDate}}</v-chip>
         </v-flex>
 
         <v-flex xs3>
@@ -115,14 +115,14 @@
               <v-date-picker v-model="editedItem.dueDate" no-title scrollable>
                 <v-spacer></v-spacer>
                 <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
-                <v-btn flat color="primary" @click="editedItem.dueDate =null">Clear</v-btn>
+                <v-btn flat color="primary" @click="editedItem.dueDate =''">Clear</v-btn>
               </v-date-picker>
             </v-menu>
           </v-subheader>
         </v-flex>
 
         <v-flex xs3>
-          <v-chip color="red" v-if="editedItem.dueDate!=null" >{{editedItem.dueDate}}</v-chip>
+          <v-chip color="red" v-if="editedItem.dueDate!=''" >{{editedItem.dueDate}}</v-chip>
         </v-flex>
       </v-layout>
 
@@ -273,12 +273,12 @@
               <v-card>
                 <v-list two-line subheader>
                   <v-list-tile v-for="(history,index) in editedItem.history_pn" :key="index">
-
+                    <v-subheader>零件号历史记录</v-subheader>
                     <v-list-tile-content>
                       <v-list-tile-title>
                         V{{index}}:{{history.partNumber}}
                       </v-list-tile-title>
-                      <v-list-tile-sub-title>{{history.date}}</v-list-tile-sub-title>
+                      <v-list-tile-sub-title>{{history.date | formatDate}}</v-list-tile-sub-title>
                     </v-list-tile-content>
                   </v-list-tile>
 
@@ -321,61 +321,72 @@
         </v-flex>
       </v-layout>
 
-      <v-layout row
-                v-if="editedItem.isLeaf==false || target == 'project' "
-                >
-        <v-flex xs12>
-          <v-subheader>Checklist</v-subheader>
-          <v-list-tile avatar v-for="(item, i) in editedItem.children" :key="i">
-            <v-list-tile-action>
-              <v-checkbox v-model="item.checked"
-                          :value ="item.checked"
-                          :disabled="disable"></v-checkbox>
-            </v-list-tile-action>
-            <v-list-tile-content>
-              <v-list-tile-title>{{item.name}}</v-list-tile-title>
-              <v-list-tile-sub-title>Assign to :{{item.ownerName}}</v-list-tile-sub-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-flex>
-
-        <v-divider class="divide"/>
-      </v-layout>
-
-      <v-layout row>
-       <v-flex xs12>
-         <v-subheader>Files</v-subheader>
-         <inputFile v-model="file" accept="" size="small" @onChange="fileChange"></inputFile>
-         <v-btn>Upload</v-btn>
-       </v-flex>
-      </v-layout>
-
-      <v-layout row>
-        <v-subheader>Comments History</v-subheader>
-        <v-list three-line>
-          <template v-for="(item, index) in editedItem.history_c">
-            <v-list-tile avatar  @click="">
-              <v-list-tile-avatar>
-                <img :src="item.avatar">
-              </v-list-tile-avatar>
+        <v-layout row wrap
+                  v-if="editedItem.isLeaf==false || target == 'project' "
+                  >
+          <v-flex xs12 sm12>
+            <v-expansion-panel>
+              <v-expansion-panel-content>
+            <v-subheader slot="header">Checklist</v-subheader>
+            <v-list-tile avatar v-for="(item, i) in editedItem.children" :key="i">
+              <v-list-tile-action>
+                <v-checkbox v-model="item.checked"
+                            :value ="item.checked"
+                            :disabled="disable"></v-checkbox>
+              </v-list-tile-action>
               <v-list-tile-content>
-                <v-list-tile-title v-html="item.content"></v-list-tile-title>
-                <v-list-tile-sub-title v-html=""></v-list-tile-sub-title>
+                <v-list-tile-title>{{item.name}}</v-list-tile-title>
+                <v-list-tile-sub-title>Assign to :{{item.ownerName}}</v-list-tile-sub-title>
               </v-list-tile-content>
             </v-list-tile>
-          </template>
-        </v-list>
-      </v-layout>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
 
+            <v-expansion-panel>
+              <v-expansion-panel-content>
+               <v-subheader slot="header">Files</v-subheader>
+                <upload_file
+                  ref="upload_file"
+                  :files="editedItem.attachment"
+                  :projectId="projectId"
+                  :ref_id = "ref_id"
+                  :target="target"
+                  ></upload_file>
+               </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-expansion-panel>
+              <v-expansion-panel-content>
+              <v-subheader slot="header">Comments History</v-subheader>
+              <v-list three-line>
+                <template v-for="(item, index) in editedItem.history_c">
+                  <v-list-tile avatar  @click="">
+                    <v-list-tile-avatar>
+                      <img :src="item.avatar">
+                    </v-list-tile-avatar>
+                    <v-list-tile-content>
+                      <v-list-tile-title v-html="item.name"></v-list-tile-title>
+                      <v-list-tile-sub-title v-html="item.content"></v-list-tile-sub-title>
+                    </v-list-tile-content>
+                    <v-list-tile-action>
+                      <v-list-tile-action-text>{{item.date | formatDate}}</v-list-tile-action-text>
+                    </v-list-tile-action>
+                  </v-list-tile>
+                </template>
+               </v-list>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-flex>
+      </v-layout>
     </v-card-text>
 
-    <v-footer height="125px" color="primary">
+    <v-footer height="110px" color="primary">
       <v-layout row>
         <v-flex xs2>
           <v-avatar :src="myInformation.avatar"></v-avatar>
         </v-flex>
         <v-flex xs8>
-          <v-text-field style="" label="Comment" v-model="commit"/>
+          <v-text-field style="" label="Comment" v-model="comment"/>
         </v-flex>
         <v-flex xs2>
           <v-btn icon @click="sendCommit"><i class="material-icons">send</i></v-btn>
@@ -387,11 +398,13 @@
 </template>
 
 <script>
-  import  InputFile from './InputFile'
+  import {formatDate} from '../../utils/date'
+  import  UploadFile from './UploadFile'
+
     export default {
       name: "Card",
       components:{
-        'inputFile':InputFile
+        'upload_file':UploadFile
       },
       props:{
         editedItem:{
@@ -421,13 +434,20 @@
           addingMembers:[],
           addMemberShow:false,
           oldPartNumber:"",
-          files:[],
-          file: null,
           pn_menu:false,
-          commit:""
+          comment:"",
+          file:[],
+          fileList:[],
 
 
         }
+      },
+      filters: {
+        formatDate(time) {
+          var date = new Date(time);
+          return formatDate(date, "yyyy-MM-dd hh:mm");
+        },
+
       },
       computed:{
         progress(){
@@ -445,19 +465,52 @@
             }
             return parseInt(result/children.length*100);
           },
+        owner_Avatar(){
+          let that =this;
+          if(that.editedItem !=undefined){
+            let owner = this.editedItem.owner;
+            let info = that.users.find((v)=>{
+              if(v._id == owner) return v;
+            });
+            if(info.avatar !=undefined) {
+              return info.avatar;
+            }
+          }
+
+        },
+        projectId(){
+          if(this.target =="project"){
+            return this.editedItem._id;
+          }
+          else if(this.target == "task"){
+            return this.editedItem.project
+          }
+          else{
+            return "";
+          }
+        },
+        ref_id(){
+          if(this.target == "task"){
+            return this.editedItem.reference_id
+          }else{
+            return "";
+          }
+        }
+
+
+
 
       },
       mounted(){
         if(this.target =="project"){
           this.oldPartNumber = this.editedItem.partNumber;
         }
-
+        this.$refs.upload_file.fetchData();
       },
       methods: {
 
         judgeIsOwner() {
 
-          console.log(this.myInformation.name)
           if (this.myInformation._id != this.editedItem.owner) {
             return alert("你没有编辑权限");
           } else {
@@ -471,21 +524,23 @@
           if (target == "project") {
             let pid = this.editedItem._id;
             url = "/api/project/" + pid + "/to/" + newOwner._id;
-
           }
           else if (target == "task") {
             let rid = this.editedItem.reference_id;
-            let pid = this.editedItem.projectId;
+            let pid = this.editedItem.project;
             url = "/api/asset/" + rid + "/of/" + pid + "/to/" + newOwner._id;
           }
+
           let newId = {
             "owner": newOwner._id
           }
           postData(this, url, newId, () => {
             this.$emit('refreshData');
             this.ownerDialog = false;
+            this.sendNotification(newOwner._id);
             this.closeDialog();
           })
+
         },
         addMembers() {
           let that = this;
@@ -507,21 +562,15 @@
           for (let i = 0; i < newMembersInfo.length; i++) {
             id[i] = newMembersInfo[i]._id;
           }
-          console.log(id);
           postData(this, url, id, () => {
-
             this.$emit('refreshData');
-
             this.addingMembers = [];
             this.addMemberShow = false;
 
           });
-          // console.log(this.items);
-
         },
 
         deleteMember(item, index) {
-          console.log(item);
           let r = confirm("确定删除该成员？");
           if (!r) {
             return;
@@ -532,12 +581,8 @@
             pid = that.editedItem._id;
             url = "/api/project/" + pid + "/member/delete";
             let memberID = [item._id];
-            console.log(index)
             that.editedItem.membersInfo.splice(index, 1);
-            console.log(that.editedItem.membersInfo);
-            console.log("members")
             postData(this, url, memberID, () => {
-
               this.$emit('refreshData');
 
             })
@@ -546,15 +591,9 @@
         },
 
         onSave(item) {
-          // this.task.createDate = new Date().getTime();
-          console.log(item);
 
           delete item.membersInfo;
-
-          item.startDateUTC = new Date(item.startDate).getTime();
-          delete item.startDate;
-          item.dueDateUTC = new Date(item.dueDate).getTime();
-          delete item.dueDate;
+          // delete
           item.modifyDateUTC = new Date().getTime();
 
           let children = item.children;
@@ -568,10 +607,10 @@
           let pid, rid;
 
           if (this.target == "project") {
-            if(this.oldPartNumber != item.partNumber){
+            if(this.oldPartNumber!== item.partNumber){
               item.history_pn.push({
                 "partNumber":item.partNumber,
-                "date":(new Date()).toLocaleDateString() + " " + (new Date()).toLocaleTimeString()
+                "date":new Date().getTime()
               })
             }
 
@@ -584,8 +623,9 @@
           }
           else if (this.target == "task") {
             rid = item.reference_id;
-            pid = item.projectId;
+            pid = item.project;
             let url = "/api/asset/update/" + rid + "/of/" + pid;
+            delete item._id,item.reference_id,item.project;
             postData(this, url, item, () => {
               this.$emit('refreshData');
             })
@@ -593,10 +633,11 @@
           this.closeDialog();
 
         },
+
         saveChildren(children) {
           let pid, rid, result;
           if (children && children.length > 0) {
-            pid = children[0].projectId;
+            pid = children[0].project;
             for (let i = 0; i < children.length; i++) {
 
               let child = children[i];
@@ -611,7 +652,6 @@
               } else {
                 result = {
                   "checked": false,
-                  "status": "progress"
                 }
               }
               postData(this, url, result)
@@ -621,15 +661,15 @@
           } else {
             return false;
           }
-
         },
+
         closeDialog() {
           let editedShow = false;
           this.disable = true;
-          console.log(editedShow)
           this.$emit('refreshData');
           this.$emit("changeShow", editedShow)
         },
+
         uniqueArray(array, key) {
           let result = [array[0]];
           for (let i = 1; i < array.length; i++) {
@@ -655,26 +695,39 @@
 
         sendCommit(){
           let item = this.editedItem;
-          let commit = {
+          let history_c = this.editedItem.history_c;
+          let comment = {
             "owner" : this.myInformation._id,
-            "content":this.commit,
-            "date": new Date()
+            "name" : this.myInformation.name,
+            "email" : this.myInformation.email,
+            "content":this.comment,
+            "date": new Date().getTime()
           };
+          history_c.unshift(comment);
+          console.log(history_c);
+          let data = {
+            "history_c":history_c
+          }
+          this.editedItem.history_c = history_c;
+
           if (this.target == "project") {
             let pid = item._id;
             let url = "/api/project/" + pid + "/update";
 
-            postData(this, url, commit, () => {
-              // this.$emit('refreshData');
+            postData(this, url, data, () => {
+              this.comment="";
+              this.$emit('refreshData');
             })
           }
           else if (this.target == "task") {
-            let pid = item.projectId;
+            let pid = item.project;
             let rid = item.reference_id;
 
             let url = "/api/asset/update/" + rid + "/of/" + pid;
-            postData(this, url, item, () => {
-              // this.$emit('refreshData');
+            postData(this, url, data, () => {
+              this.comment="";
+              this.sendNotification(this.editedItem.owner)
+              this.$emit('refreshData');
             })
           }
         },
@@ -692,7 +745,29 @@
           else if(this.target === "task"){
 
           }
-        }
+        },
+        sendNotification(receiver){
+          let now = new Date().getTime();
+          console.log("now"+now);
+          let url = "/api/notification/to/"+receiver;
+          let content = this.myInformation.name+"把任务<"+this.editedItem.name+">转交给您了";
+          let notification = {
+            "to" :receiver,
+            "from":this.myInformation._id,
+            "project":this.target=="project"?this.editedItem._id:this.editedItem.project,
+            "task":this.target=="project"?"":this.editedItem.reference_id,
+            "info": content,
+            "is_read":false,
+            "date":now
+          }
+          console.log(notification)
+
+          postData(this,url,notification,()=>{
+            console.log("send")
+          })
+
+        },
+
 
 
 

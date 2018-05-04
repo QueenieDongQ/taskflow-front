@@ -65,7 +65,7 @@
 </template>
 
 <script>
-    import InputFile from '../../components/Kanban/InputFile'
+    import InputFile from './InputFile'
     export default {
       name: "userinfo",
       components:{
@@ -124,7 +124,7 @@
         uploadAvatar(){
           let file = this.file;
           console.log("upload",file)
-          // if(file.length==0) return alert("您还未选择头像文件");
+          if(file.length==0) return alert("您还未选择头像文件");
           let url = '/api/user/avatar/upload';
 
           // if (file) {
@@ -142,30 +142,20 @@
 
           formData.append('Content-Type', 'multipart/form-data')
           formData.append('avatar_file', file)
+          formData.append('avatar_filename', file.name)
 
-          this.$http.post(url, formData).then(response => {
-            console.log(response)
-          }, error => {
-            // this.notify(error);
-            console.log(error)
-
-          });
-
-
-
-
+         postData(this,url,formData,(data)=>{
+           if(data==null){
+             let info={
+               "avatar":"/api/user/avatar/"+this.user._id
+             }
+             postData(this,"/api/user/update",info,()=>{
+               this.fetchData();
+             })
+           }
+         })
         },
-        // uploadProgress (progress, flag) {
-        //   //这里可以通过回调的flag对不同上传域做处理
-        //   this.progress = progress < 100 ? progress : 0;
-        // },
-        // uploadComplete(status, result, flag) {
-        //   if (status == 200) { //
-        //     // this.thumbnail = `d/${result.key}` //七牛域名 + 返回的key 组成文件url
-        //   } else {
-        //     //失败处理
-        //   }
-        // },
+
       }
     }
 </script>
