@@ -91,13 +91,13 @@
 
       uploadFile(file){
         console.log(file)
-        let fd = new FormData();
-        fd.append('filename',file.file.name)
-        fd.append('file',file);//传文件
+        // let fd = new FormData();
+        // fd.append('filename',file.file.name)
+        // fd.append('file',file);//传文件
         let url="/api/attachment/upload/"+file.file.name+"/to/"+this.projectId;
 
-        this.$http.post(url, fd).then(response => {
-        // this.$http.post(url, file.file).then(response => {
+        // this.$http.post(url, fd).then(response => {
+        this.$http.post(url, file).then(response => {
           if(response.data.code != 0) {
             // this.notify(response.data.error);
             this.$message.error(response.data.error);
