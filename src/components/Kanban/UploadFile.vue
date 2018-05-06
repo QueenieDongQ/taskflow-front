@@ -31,7 +31,7 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="handleDownload(scope.$index, scope.row)">下载</el-button>
+            @click=""><a :href="'/api/attachment/download/'+scope.row._id+'/of/'+projectId" target="_blank">下载</a></el-button>
           <el-button
             size="mini"
             type="danger"
@@ -105,7 +105,7 @@
            length = file.size;
         }
         let fd = new FormData();
-        fd.append("Content-Type","multipart/form-data;")
+        // fd.append("Content-Type","multipart/form-data;")
         fd.append("file",file);
 
         var xhr = new XMLHttpRequest;
@@ -120,7 +120,7 @@
             }
             let file_id = response.data;
             console.log(file_id)
-            // that.uploadOnSuccess(filename, file_id);
+            that.uploadOnSuccess(filename, file_id);
           }
         }
 
@@ -338,5 +338,20 @@
 
   .burst{
     background-image: url("../../assets/logo.png");
+  }
+  a {
+    cursor:pointor;
+  }
+  a:link {
+    text-decoration: none;
+  }
+  a:visited {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: none;
+  }
+  a:active {
+    text-decoration: none;
   }
 </style>

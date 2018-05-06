@@ -16,6 +16,7 @@
         <v-data-table  :headers="headers"
                        :items="items"
                        hide-actions
+                       :pagination.sync="pagination"
                        class="elevation-1"
                        :search="search"
                        :loading:="loading">
@@ -45,6 +46,9 @@
             </v-alert>
           </template>
         </v-data-table>
+        <div class="text-xs-center pt-2">
+          <v-pagination v-model="pagination.page" :length="pages"></v-pagination>
+        </div>
 
         <v-dialog v-model="dialog" max-width="500px">
           <v-card fluid justify-center>
@@ -159,6 +163,7 @@
             }
 
           ],
+          pagination: {},
           loading:false,
           search:'',
           myInformation:{},
@@ -194,7 +199,13 @@
         }
       },
       computed: {
+        pages () {
+          if (this.pagination.rowsPerPage == null ||
+            this.pagination.totalItems == null
+          ) return 0
 
+          return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
+        }
       },
 
       watch: {
@@ -487,7 +498,16 @@
 
 <style scoped>
 
-  .time{
-
+  a:link {
+    text-decoration: none;
+  }
+  a:visited {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: none;
+  }
+  a:active {
+    text-decoration: none;
   }
 </style>

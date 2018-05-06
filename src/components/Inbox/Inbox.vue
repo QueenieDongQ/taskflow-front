@@ -139,11 +139,12 @@
         },
         markRead(item){
           console.log(item)
-          this.item.is_read=true;
+
           let id = [item._id]
-          let url ="/api/notification/read"
+          let url ="/api/notification/read";
 
           postData(this,url,id,()=>{
+            this.getNotifications();
             console.log("success")
           })
 

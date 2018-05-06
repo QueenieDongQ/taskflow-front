@@ -178,13 +178,27 @@
         let that = this;
 
         let model =that.model;
-        let name=prompt("Enter the task name","Name");
-        if(name!=null && name!=""){
-          this.addChild(isLeaf,model,name);
-        }else{
-          return;
-        }
+        // let name=prompt("Enter the task name","Name");
+        that.$prompt('请输入任务名称', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+
+        }).then(({ value }) => {
+          // this.$message({
+          //   type: 'success',
+          //   message: '你的邮箱是: ' + value
+          // }
+          console.log(value)
+          this.addChild(isLeaf,model,value);
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消输入'
+          });
+        });
+
       },
+
       addChild(isLeaf,model,name) {
 
         let createItem = {
@@ -230,8 +244,17 @@
       delNode () {
         const vm = this
         console.log(this.model)
-        if (window.confirm('Are you sure?')) {
+
+        this.$confirm('此操作将永久删除该任务, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
           vm.model.remove();
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          });
           let rid = this.model.reference_id;
           let pid = this.model.project;
           let children = vm.model.children;
@@ -250,7 +273,13 @@
 
           }
 
-        }
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });
+        });
+
       },
 
       setEditable () {
