@@ -115,12 +115,14 @@
             this.myInformation=data;
           })
         },
+
         getUsers(){
           let url ="/api/user/all";
           getData(this,url,(data)=>{
             this.users=data;
           })
         },
+
         fetchData(callback = undefined) {
           //get projects data
           let bigData = [];
@@ -143,7 +145,6 @@
                     this.initDashboard();
                   }
                 });
-                // project.assets = fetched
               })
             })
           })

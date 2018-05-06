@@ -89,9 +89,9 @@
           </v-card>
         </v-dialog>
         <v-dialog v-model="editedShow"
+                  fullscreen
+                  hide-overlay
                   transition="dialog-bottom-transition"
-                  :overlay="false"
-                  max-width="500px"
                   scrollable class="editDialog">
           <card ref="card"
                 target="project"

@@ -8,11 +8,13 @@
         action=""
         :http-request="uploadFile"
         :on-progress="uploadOnProgress"
+
         >
 
         <el-button size="small" type="primary">点击上传</el-button>
       </el-upload>
     </div>
+
     <el-table
       :data="filelist"
       style="width: 100%">
@@ -40,6 +42,7 @@
     <div v-if="!pass && progress !== 0" class="img-content img-progress">
       <el-progress type="circle" :percentage="progress" :status="proStatus"></el-progress>
     </div>
+
   </div>
 </template>
 
@@ -55,7 +58,8 @@
         params: {
           action: '',
           data:null
-        }
+        },
+        ended:true
       }
     },
     watch: {
@@ -86,33 +90,49 @@
           console.log("file",data)
           // this.filelist = data;
         })
-
       },
 
-      uploadFile(file){
-        console.log(file)
-        // let fd = new FormData();
-        // fd.append('filename',file.file.name)
-        // fd.append('file',file);//传文件
-        let url="/api/attachment/upload/"+file.file.name+"/to/"+this.projectId;
+      uploadFile(_file){
+        let that  =this;
+        let url = "/api/attachment/upload/to/" + that.projectId;
+        let file = _file.file;
+        let filename,type,length;
+        console.log(file);
 
-        // this.$http.post(url, fd).then(response => {
-        this.$http.post(url, file).then(response => {
-          if(response.data.code != 0) {
-            // this.notify(response.data.error);
-            this.$message.error(response.data.error);
-            return;
+        if (file) {
+           filename = file.name;
+           type = file.type;
+           length = file.size;
+        }
+        let fd = new FormData();
+        fd.append("Content-Type","multipart/form-data;")
+        fd.append("file",file);
+
+        var xhr = new XMLHttpRequest;
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState == 4 && xhr.status == 200) {
+            console.log(xhr.responseText);
+            let response = eval('('+ xhr.responseText +')');
+            if(response.code!=0){
+              this.$message.error("上传失败");
+              return;
+            }
+            let file_id = response.data;
+            console.log(file_id)
+            // that.uploadOnSuccess(filename, file_id);
           }
-          console.log(this.filelist)
+        }
 
-          let filename = file.file.name;
-          let file_id = response.data.data;
-          this.uploadOnSuccess(filename,file_id);
+        xhr.open("POST", url, false);
+        // xhr.setRequestHeader("Content-type","multipart/form-data")
+        xhr.setRequestHeader("file_type",type);
+        xhr.setRequestHeader("file_name",filename);
+        xhr.setRequestHeader("X-File-Length",length);
+
+        xhr.send(fd);
 
 
-        }, error => {
-          this.uploadOnError(error)
-        });
 
 
       },
@@ -126,10 +146,14 @@
         console.log("——————————success——————————")
         this.pass = true;
         this.$message.success("上传成功")
+        console.log(file_id)
+        if(!file_id)return;
+
         this.filelist.push({
           "_id" :file_id,
           "name": filename
         })
+
         let attachment = {
           "attachment":this.filelist
         }
@@ -174,12 +198,18 @@
             type: 'success',
             message: '删除成功',
             onClose: () => {
-              that.filelist.splice(i,1)
+              that.filelist.splice(index,1)
 
               let url_del = "/api/attachment/delete/"+file._id;
-              postData(this,url_del,file._id,()=>{
+              let id = {
+                "_id":file._id
+
+              }
+
+              postData(this,url_del,id,()=>{
                 console.log("delete")
               })
+              this.updateInAssets(that.filelist)
 
             }
           })
@@ -304,5 +334,9 @@
   .img-list .img-content .layer i{
     font-size:1.6em;
     margin-top:80px;
+  }
+
+  .burst{
+    background-image: url("../../assets/logo.png");
   }
 </style>

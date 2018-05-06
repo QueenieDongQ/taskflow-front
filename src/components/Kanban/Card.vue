@@ -1,5 +1,8 @@
 <template>
-  <v-card id="leaf_card" justify-center text-xs-center>
+  <v-card id="leaf_card"
+          fullscreen
+          justify-center
+          text-xs-center>
     <v-dialog v-model="ownerDialog" max-width="500px">
         <v-card>
           <v-card-title>
@@ -68,7 +71,7 @@
         </v-flex>
         <v-flex xs2>
           <v-tooltip bottom>
-            <v-avatar slot="activator"><img ></v-avatar>
+            <v-avatar slot="activator"><img :src="owner_Avatar"></v-avatar>
             <span> Name:{{editedItem.ownerName}}</span><br/>
             <span> Email:{{editedItem.email}}</span>
           </v-tooltip>
@@ -140,7 +143,6 @@
             <v-flex 10>
               <v-layout>
                 <v-flex xs6 sm4 v-for="member in  editedItem.membersInfo" :key="member._id">
-
                   <v-chip>
                     <v-avatar>
                       <img :src="member.avater">
@@ -382,14 +384,11 @@
 
     <v-footer height="110px" color="primary">
       <v-layout row>
-        <v-flex xs2>
-          <v-avatar :src="myInformation.avatar"></v-avatar>
-        </v-flex>
-        <v-flex xs8>
+        <v-flex xs10>
           <v-text-field style="" label="Comment" v-model="comment"/>
         </v-flex>
         <v-flex xs2>
-          <v-btn icon @click="sendCommit"><i class="material-icons">send</i></v-btn>
+          <v-btn icon @click="sendCommit"><v-icon>send</v-icon></v-btn>
         </v-flex>
       </v-layout>
 
@@ -448,6 +447,7 @@
           return formatDate(date, "yyyy-MM-dd hh:mm");
         },
 
+
       },
       computed:{
         progress(){
@@ -465,19 +465,7 @@
             }
             return parseInt(result/children.length*100);
           },
-        owner_Avatar(){
-          let that =this;
-          if(that.editedItem !=undefined){
-            let owner = this.editedItem.owner;
-            let info = that.users.find((v)=>{
-              if(v._id == owner) return v;
-            });
-            if(info.avatar !=undefined) {
-              return info.avatar;
-            }
-          }
 
-        },
         projectId(){
           if(this.target =="project"){
             return this.editedItem._id;
@@ -495,7 +483,25 @@
           }else{
             return "";
           }
-        }
+        },
+        owner_Avatar(){
+          let that =this;
+          console.log("item",that.editedItem)
+          if(that.editedItem._id){
+            // console.log(owner)
+            let owner = that.editedItem.owner;
+            let info = that.users.find((v)=>{
+              if(v._id == owner) return v;
+            });
+            console.log("avat",info)
+            if(info.avatar !=undefined || info.avatar) {
+              return info.avatar;
+            }
+          }else{
+            return "";
+          }
+
+        },
 
 
 
@@ -508,6 +514,7 @@
         this.$refs.upload_file.fetchData();
       },
       methods: {
+
 
         judgeIsOwner() {
 
@@ -537,7 +544,9 @@
           postData(this, url, newId, () => {
             this.$emit('refreshData');
             this.ownerDialog = false;
-            this.sendNotification(newOwner._id);
+            let header = "转交任务"
+            let content = this.myInformation.name+"把任务<"+this.editedItem.name+">转交给您了";
+            this.sendNotification(newOwner._id,header,content);
             this.closeDialog();
           })
 
@@ -566,6 +575,7 @@
             this.$emit('refreshData');
             this.addingMembers = [];
             this.addMemberShow = false;
+            // this.sendNotification()
 
           });
         },
@@ -696,14 +706,14 @@
         sendCommit(){
           let item = this.editedItem;
           let history_c = this.editedItem.history_c;
-          let comment = {
+          let new_comment = {
             "owner" : this.myInformation._id,
             "name" : this.myInformation.name,
             "email" : this.myInformation.email,
             "content":this.comment,
             "date": new Date().getTime()
           };
-          history_c.unshift(comment);
+          history_c.unshift(new_comment);
           console.log(history_c);
           let data = {
             "history_c":history_c
@@ -715,6 +725,11 @@
             let url = "/api/project/" + pid + "/update";
 
             postData(this, url, data, () => {
+              let header = this.myInformation.name+"在项目"+this.editedItem.name+"给您留言了";
+              let content = new_comment.content;
+              this.comment="";
+
+              this.sendNotification(this.editedItem.owner,header,content)
               this.comment="";
               this.$emit('refreshData');
             })
@@ -725,38 +740,51 @@
 
             let url = "/api/asset/update/" + rid + "/of/" + pid;
             postData(this, url, data, () => {
+              let header = this.myInformation.name+"在任务"+this.editedItem.name+"中给您留言了";
+              let content = new_comment.content;
               this.comment="";
-              this.sendNotification(this.editedItem.owner)
+
+              this.sendNotification(this.editedItem.owner,header,content)
               this.$emit('refreshData');
             })
           }
         },
+
         deleteTask(model){
+
+          let url,t
           if(this.target === "project"){
-            let url = "/api/project/"+model._id+"/delete";
-            let t = {
+            url = "/api/project/"+model._id+"/delete";
+            t = {
               "_id":model._id
             }
-            postData(this,url,t);
-
-            this.closeDialog();
 
           }
           else if(this.target === "task"){
-
+            url ="/api/asset/delete/"+model.reference_id+"/of/"+model.project;
+            t = {
+              "reference_id":model.reference_id
+            }
           }
+
+          postData(this,url,t,()=>{
+            this.closeDialog();
+          });
+
         },
-        sendNotification(receiver){
+
+        sendNotification(receiver,header,content){
           let now = new Date().getTime();
           console.log("now"+now);
           let url = "/api/notification/to/"+receiver;
-          let content = this.myInformation.name+"把任务<"+this.editedItem.name+">转交给您了";
+
           let notification = {
             "to" :receiver,
             "from":this.myInformation._id,
             "project":this.target=="project"?this.editedItem._id:this.editedItem.project,
-            "task":this.target=="project"?"":this.editedItem.reference_id,
-            "info": content,
+            "task":this.target=="project"?"pj":this.editedItem.reference_id,
+            "header":header,
+            "content": content,
             "is_read":false,
             "date":now
           }
@@ -769,13 +797,9 @@
         },
 
 
-
-
     }
 
-
-
-    }
+}
 </script>
 
 <style scoped>

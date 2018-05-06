@@ -2,7 +2,7 @@
   <v-layout scrollable>
     <v-flex xs12>
         <v-list two-line subheader>
-          <v-expansion-panel>
+          <v-expansion-panel expand>
             <v-expansion-panel-content>
               <v-subheader slot="header">收件箱</v-subheader>
               <v-list-tile v-if="notifications.length==0">
@@ -15,8 +15,8 @@
                   <v-checkbox v-model="item.is_read" @click="markRead(item)"></v-checkbox>
                 </v-list-tile-action>
                 <v-list-tile-content>
-                  <v-list-tile-title>{{item.from}}</v-list-tile-title>
-                  <v-list-tile-sub-title>{{item.info}}</v-list-tile-sub-title>
+                  <v-list-tile-title>{{item.header}}</v-list-tile-title>
+                  <v-list-tile-sub-title>{{item.content}}</v-list-tile-sub-title>
                 </v-list-tile-content>
                 <v-list-tile-action>
                   <v-list-tile-action-text>{{ item.date |format_Date}}</v-list-tile-action-text>
@@ -139,6 +139,7 @@
         },
         markRead(item){
           console.log(item)
+          this.item.is_read=true;
           let id = [item._id]
           let url ="/api/notification/read"
 

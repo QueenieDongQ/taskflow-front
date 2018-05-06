@@ -73,33 +73,40 @@
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <span class="hidden-xs-only">Project Kanban</span>
     </v-toolbar-title>
-    <!--<v-text-field-->
-      <!--light-->
-      <!--solo-->
-      <!--prepend-icon="search"-->
-      <!--placeholder="Search"-->
-      <!--style="max-width: 500px; min-width: 128px"-->
-    <!--&gt;</v-text-field>-->
+
     <div class="d-flex align-center" style="margin-left: auto">
-      <v-btn icon>
-        <v-icon>apps</v-icon>
-      </v-btn>
+      <!--<v-btn icon>-->
+        <!--<v-icon>apps</v-icon>-->
+      <!--</v-btn>-->
 
       <v-btn icon @click="jumpToHome">
-        <v-badge color="red" style="background-color: rgba(0,0,0,0)">
+        <v-badge color="red"
+                 left
+                 style="background-color: rgba(0,0,0,0)">
           <span slot="badge" v-if="noti_num!=0">{{noti_num}}</span>
           <v-icon>notifications</v-icon>
         </v-badge>
       </v-btn>
-      <v-btn icon large @click="">
-        <v-avatar size="32px" tile>
-          <img
-            :src="myInformation.avatar"
-            v-if="myInformation.avatar"
-          >
-          <v-icon>account</v-icon>
-        </v-avatar>
-      </v-btn>
+      <!--<v-btn icon large @click="">-->
+        <!--<v-avatar size="32px" tile>-->
+          <!--<img-->
+            <!--:src="myInformation.avatar"-->
+            <!--v-if="myInformation.avatar"-->
+          <!--&gt;-->
+          <!--<v-icon>account</v-icon>-->
+        <!--</v-avatar>-->
+      <!--</v-btn>-->
+      <v-avatar
+        slot="activator"
+        size="36px"
+      >
+        <img
+          v-if="myInformation.avatar"
+          :src="myInformation.avatar"
+          alt=""
+        >
+        <v-icon v-else >account</v-icon>
+      </v-avatar>
     </div>
   </v-toolbar>
   <v-content fluid grid-list-md>
@@ -131,8 +138,11 @@
       source: String
     },
     mounted(){
-      this.myInfo();
-      this.getNotification();
+      let that = this;
+      that.myInfo();
+      setInterval(function(){
+        that.getNotification();
+      },5000)
     },
     methods:{
       myInfo(){
