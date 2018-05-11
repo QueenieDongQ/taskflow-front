@@ -1,6 +1,6 @@
 <template>
   <div class="img-list">
-    <div class="">
+      <form id="form1" enctype="multipart/form-data">
       <el-upload
         class="upload-demo"
         ref="upload"
@@ -8,13 +8,12 @@
         action=""
         :http-request="uploadFile"
         :on-progress="uploadOnProgress"
-
+        :disabled="disabled"
         >
 
-        <el-button size="small" type="primary">点击上传</el-button>
+        <el-button size="small" type="primary" :disabled="disabled">点击上传</el-button>
       </el-upload>
-    </div>
-
+      </form>
     <el-table
       :data="filelist"
       style="width: 100%">
@@ -31,17 +30,21 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click=""><a :href="'/api/attachment/download/'+scope.row._id+'/of/'+projectId" target="_blank">下载</a></el-button>
+            @click="download(scope.row._id)">
+            下载</el-button>
+          <!--<a :href="'/api/attachment/download/'+scope.row._id+'/of/'+projectId" target="_blank">下载</a>-->
           <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            @click="handleDelete(scope.$index, scope.row)"
+            :disabled="disabled">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
     <div v-if="!pass && progress !== 0" class="img-content img-progress">
       <el-progress type="circle" :percentage="progress" :status="proStatus"></el-progress>
     </div>
+    <iframe id="my_iframe" style="display:none;"></iframe>
 
   </div>
 </template>
@@ -49,7 +52,7 @@
 <script>
   export default{
     name: 'upload-list',
-    props:['files','projectId','ref_id','target'],
+    props:['files','projectId','ref_id','target','disabled'],
     data(){
       return {
         progress: 0,//上传进度
@@ -80,7 +83,6 @@
 
     },
     mounted(){
-      // this.fetchData();
     },
     methods: {
       fetchData(){
@@ -105,7 +107,6 @@
            length = file.size;
         }
         let fd = new FormData();
-        // fd.append("Content-Type","multipart/form-data;")
         fd.append("file",file);
 
         var xhr = new XMLHttpRequest;
@@ -125,17 +126,41 @@
         }
 
         xhr.open("POST", url, false);
-        // xhr.setRequestHeader("Content-type","multipart/form-data")
+        // xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded;charset=utf-8');
         xhr.setRequestHeader("file_type",type);
-        xhr.setRequestHeader("file_name",filename);
+        xhr.setRequestHeader("file_name",that.stringToByte(filename));
         xhr.setRequestHeader("X-File-Length",length);
 
         xhr.send(fd);
-
-
-
-
       },
+        /*文件中文名不能直接上传
+        * 需要进行转换byteString类型文件名
+        * */
+       stringToByte(str) {
+        var bytes = new Array();
+        var len, c;
+        len = str.length;
+        for(var i = 0; i < len; i++) {
+          c = str.charCodeAt(i);
+          if(c >= 0x010000 && c <= 0x10FFFF) {
+            bytes.push(((c >> 18) & 0x07) | 0xF0);
+            bytes.push(((c >> 12) & 0x3F) | 0x80);
+            bytes.push(((c >> 6) & 0x3F) | 0x80);
+            bytes.push((c & 0x3F) | 0x80);
+          } else if(c >= 0x000800 && c <= 0x00FFFF) {
+            bytes.push(((c >> 12) & 0x0F) | 0xE0);
+            bytes.push(((c >> 6) & 0x3F) | 0x80);
+            bytes.push((c & 0x3F) | 0x80);
+          } else if(c >= 0x000080 && c <= 0x0007FF) {
+            bytes.push(((c >> 6) & 0x1F) | 0xC0);
+            bytes.push((c & 0x3F) | 0x80);
+          } else {
+            bytes.push(c & 0xFF);
+          }
+        }
+        return bytes;
+      },
+
       uploadOnProgress(e,file){//开始上传
         console.log("percent",e.percent,file)
         this.progress = Math.floor(e.percent)
@@ -217,32 +242,25 @@
       },
 
 
-      handleDownload(index,file){
-        let obj_id = file._id;
-        let url = "/api/attachment/download/"+obj_id+"/of/"+this.projectId;
+      // handleDownload(index,file){
+      //   let obj_id = file._id;
+      //   let url = "/api/attachment/download/"+obj_id+"/of/"+this.projectId;
+      //
+      //   this.$http.get(url).then(response => {
+      //     console.log("success",response)
+      //     // this.download(response)
+      //
+      //   }, error => {
+      //     console.log(error)
+      //   });
+      // },
 
-        this.$http.get(url).then(response => {
-          console.log("success",response)
-          // this.download(response)
-
-        }, error => {
-          console.log(error)
-        });
-      },
-
-      download (data) {
-        if (!data) {
-          return
+      download (_id) {
+        if (!_id) {
+          return;
+        }else{
+          document.getElementById("my_iframe").src="/api/attachment/download/"+_id+'/of/'+this.projectId;
         }
-        console.log(data)
-
-        // var aLink = document.createElement('a');
-        // var blob = new Blob([data]);
-        // var evt = document.createEvent("HTMLEvents");
-        // evt.initEvent("click", false, false);//initEvent 不加后两个参数在FF下会报错, 感谢 Barret Lee 的反馈
-        // aLink.download = data;
-        // aLink.href = URL.createObjectURL(blob);
-        // aLink.dispatchEvent(evt);
       }
     }
   }

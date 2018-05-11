@@ -63,7 +63,7 @@
     </v-list>
   </v-navigation-drawer>
   <v-toolbar
-    color="blue darken-3"
+    color="light-blue darken-3"
     dark
     app
     clipped-left

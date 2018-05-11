@@ -158,22 +158,7 @@
     },
 
     methods: {
-      // updateName (e) {
-      //   this.model.changeName(e.target.value);
-      //   let model = this.model;
-      //   // console.log(model);
-      //   let rid = this.model.reference_id;
-      //   let pid = this.model.project;
-      //   let url = "/api/asset/update/"+rid+"/of/"+pid;
-      //   let value ={
-      //     "name":e.target.value,
-      //     "modifyDateUTC":new Date().getTime()
-      //   }
-      //   postData(this,url,{"name":e.target.value},()=>{
-      //
-      //     this.$emit('fetchData');
-      //   });
-      // },
+
       promoteName(isLeaf){
         let that = this;
 
@@ -237,7 +222,7 @@
         let url = "/api/asset/create/"+ model.project;
 
         postData(this,url,this.createItem,()=>{
-          this.$emit('refreshData');
+          this.$emit('refresh');
         })
       },
 
@@ -251,6 +236,7 @@
           type: 'warning'
         }).then(() => {
           vm.model.remove();
+
           this.$message({
             type: 'success',
             message: '删除成功!'
@@ -269,10 +255,8 @@
           for(let i=0;i<result.length;i++){
             url = "/api/asset/delete/"+result[i]+"/of/"+pid;
             postData(this,url,result[i])
-            if(i==result.length-1) this.$emit('refreshData');
-
+            if(i==result.length-1) this.$emit('refresh');
           }
-
         }).catch(() => {
           this.$message({
             type: 'info',
@@ -298,6 +282,10 @@
         console.log(this.model);
         if (this.model.isLeaf ==false) {
           this.expanded = !this.expanded
+
+          // if(this.expanded == true){
+          //   this.$emit('')
+          // }
         }
       },
 

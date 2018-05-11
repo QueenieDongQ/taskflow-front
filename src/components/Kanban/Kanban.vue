@@ -14,7 +14,18 @@
               <v-card class="drag-item">
                 <v-card-title>{{ block.name }}</v-card-title>
                 <v-card-text>{{ block.createDate }}</v-card-text>
-
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn icon ripple @click="">
+                    <v-icon color="gray">info</v-icon>
+                  </v-btn>
+                  <v-btn icon>
+                    <v-icon>bookmark</v-icon>
+                  </v-btn>
+                  <v-btn icon>
+                    <v-icon>share</v-icon>
+                  </v-btn>
+                </v-card-actions>
               </v-card>
             </slot>
           </li>
@@ -104,7 +115,7 @@
   .drag-item {
     padding: 5px;
     margin: 10px;
-    height: 100px;
+    height: 100%;
     background: rgba(0,0,0, 0.05);
 
 

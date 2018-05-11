@@ -26,7 +26,7 @@
     </v-dialog>
 
     <v-toolbar card dark color="primary">
-      <v-btn icon @click.native="closeDialog" dark>
+      <v-btn icon @click="closeDialog()" dark>
         <v-icon>close</v-icon>
       </v-btn>
       <v-toolbar-title>
@@ -71,7 +71,7 @@
         </v-flex>
         <v-flex xs2>
           <v-tooltip bottom>
-            <v-avatar slot="activator"><img :src="owner_Avatar"></v-avatar>
+            <v-avatar slot="activator"><img :src="owner_Avatar(editedItem.owner)"></v-avatar>
             <span> Name:{{editedItem.ownerName}}</span><br/>
             <span> Email:{{editedItem.email}}</span>
           </v-tooltip>
@@ -152,8 +152,6 @@
                 </v-flex>
               </v-layout>
             </v-flex>
-
-
           </v-layout>
         </v-flex>
         <v-dialog v-model="addMemberShow" max-width="500px" height="400px">
@@ -289,19 +287,16 @@
               </v-card>
             </v-menu>
           </v-subheader>
-
         </v-flex>
-        <v-flex xs8>
 
+        <v-flex xs8>
           <v-text-field
             name="partNumber"
             v-model="editedItem.partNumber"
             multi-line
             :disabled="disable"
           />
-
         </v-flex>
-
       </v-layout>
 
       <v-layout row wrap>
@@ -323,11 +318,9 @@
         </v-flex>
       </v-layout>
 
-        <v-layout row wrap
-                  v-if="editedItem.isLeaf==false || target == 'project' "
-                  >
+        <v-layout row wrap>
           <v-flex xs12 sm12>
-            <v-expansion-panel>
+            <v-expansion-panel  v-if="editedItem.isLeaf==false || target == 'project' ">
               <v-expansion-panel-content>
             <v-subheader slot="header">Checklist</v-subheader>
             <v-list-tile avatar v-for="(item, i) in editedItem.children" :key="i">
@@ -353,6 +346,7 @@
                   :projectId="projectId"
                   :ref_id = "ref_id"
                   :target="target"
+                  :disabled="disable"
                   ></upload_file>
                </v-expansion-panel-content>
             </v-expansion-panel>
@@ -364,7 +358,7 @@
                 <template v-for="(item, index) in editedItem.history_c">
                   <v-list-tile avatar  @click="">
                     <v-list-tile-avatar>
-                      <img :src="item.avatar">
+                      <img :src="owner_Avatar(item.owner)">
                     </v-list-tile-avatar>
                     <v-list-tile-content>
                       <v-list-tile-title v-html="item.name"></v-list-tile-title>
@@ -382,17 +376,18 @@
       </v-layout>
     </v-card-text>
 
-    <v-footer height="110px" color="primary">
-      <v-layout row>
-        <v-flex xs10>
-          <v-text-field style="" label="Comment" v-model="comment"/>
-        </v-flex>
-        <v-flex xs2>
-          <v-btn icon @click="sendCommit"><v-icon>send</v-icon></v-btn>
-        </v-flex>
-      </v-layout>
+    <el-footer style="margin-bottom:10px;">
 
-    </v-footer>
+      <div style="margin-top: 20px">
+        <el-input
+
+          placeholder="请输入留言"
+          v-model="comment">
+          <el-button slot="append" icon="el-icon-message" @click="sendCommit"></el-button>
+        </el-input>
+      </div>
+
+    </el-footer>
   </v-card>
 </template>
 
@@ -402,9 +397,11 @@
 
     export default {
       name: "Card",
+
       components:{
         'upload_file':UploadFile
       },
+
       props:{
         editedItem:{
           type:Object
@@ -423,6 +420,7 @@
         }
 
       },
+
       data(){
         return{
           disable:true,
@@ -441,14 +439,14 @@
 
         }
       },
+
       filters: {
         formatDate(time) {
           var date = new Date(time);
           return formatDate(date, "yyyy-MM-dd hh:mm");
         },
-
-
       },
+
       computed:{
         progress(){
           let item = this.editedItem;
@@ -477,6 +475,7 @@
             return "";
           }
         },
+
         ref_id(){
           if(this.target == "task"){
             return this.editedItem.reference_id
@@ -484,46 +483,40 @@
             return "";
           }
         },
-        owner_Avatar(){
-          let that =this;
-          console.log("item",that.editedItem)
-          if(that.editedItem._id){
-            // console.log(owner)
-            let owner = that.editedItem.owner;
-            let info = that.users.find((v)=>{
-              if(v._id == owner) return v;
-            });
-            console.log("avat",info)
-            if(info.avatar !=undefined || info.avatar) {
-              return info.avatar;
-            }
-          }else{
-            return "";
-          }
-
-        },
-
-
-
-
       },
+
       mounted(){
         if(this.target =="project"){
           this.oldPartNumber = this.editedItem.partNumber;
         }
-        this.$refs.upload_file.fetchData();
       },
+
       methods: {
 
-
         judgeIsOwner() {
-
           if (this.myInformation._id != this.editedItem.owner) {
-            return alert("你没有编辑权限");
+            this.$alert('对不起，你不是该任务所有者，无法进行该操作', '警告', {
+              confirmButtonText: '确定',
+              callback: action => {
+                return;
+              }
+            });
           } else {
             return this.disable = false;
           }
         },
+
+        owner_Avatar(owner) {
+          let that = this;
+
+          let info = that.users.find((v) => {
+            if (v._id == owner) return v;
+          });
+          if (info.avatar != undefined || info.avatar) {
+            return info.avatar;
+          }
+        },
+
         changeOwner() {
           let newOwner = this.newOwner;
           let target = this.target;
@@ -544,13 +537,13 @@
           postData(this, url, newId, () => {
             this.$emit('refreshData');
             this.ownerDialog = false;
-            let header = "转交任务"
-            let content = this.myInformation.name+"把任务<"+this.editedItem.name+">转交给您了";
-            this.sendNotification(newOwner._id,header,content);
+            let header = "转交任务";
+            let content = this.myInformation.name + "把任务<" + this.editedItem.name + ">转交给您了";
+            this.sendNotification(newOwner._id, header, content);
             this.closeDialog();
           })
-
         },
+
         addMembers() {
           let that = this;
 
@@ -575,32 +568,34 @@
             this.$emit('refreshData');
             this.addingMembers = [];
             this.addMemberShow = false;
-            // this.sendNotification()
 
           });
         },
 
         deleteMember(item, index) {
-          let r = confirm("确定删除该成员？");
-          if (!r) {
-            return;
-          } else {
+          this.$confirm('是否删除该成员？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
             let pid, url;
             let that = this;
 
             pid = that.editedItem._id;
             url = "/api/project/" + pid + "/member/delete";
             let memberID = [item._id];
+            that.editedItem.members.splice(index, 1);
             that.editedItem.membersInfo.splice(index, 1);
             postData(this, url, memberID, () => {
               this.$emit('refreshData');
-
             })
-          }
-
+          }).catch(() => {
+            return;
+          });
         },
 
         onSave(item) {
+          // this.disable = true;
 
           delete item.membersInfo;
           // delete
@@ -617,10 +612,14 @@
           let pid, rid;
 
           if (this.target == "project") {
-            if(this.oldPartNumber!== item.partNumber){
+            /*判断当前零件号信息是否已修改，
+              若修改，将信息存入历史记录中  history_pn ==history of part number
+             */
+
+            if (this.oldPartNumber.trim() != item.partNumber.trim()) {
               item.history_pn.push({
-                "partNumber":item.partNumber,
-                "date":new Date().getTime()
+                "partNumber": item.partNumber,
+                "date": new Date().getTime()
               })
             }
 
@@ -635,13 +634,13 @@
             rid = item.reference_id;
             pid = item.project;
             let url = "/api/asset/update/" + rid + "/of/" + pid;
-            delete item._id,item.reference_id,item.project;
+            delete item._id, item.reference_id, item.project;
             postData(this, url, item, () => {
               this.$emit('refreshData');
             })
           }
+          this.disable = true;
           this.closeDialog();
-
         },
 
         saveChildren(children) {
@@ -675,9 +674,27 @@
 
         closeDialog() {
           let editedShow = false;
-          this.disable = true;
-          this.$emit('refreshData');
-          this.$emit("changeShow", editedShow)
+          let that = this;
+          console.log("disable", that.disable);
+
+          if (that.disable == false) {
+            this.$confirm('目前在编辑模式中，是否保存修改？', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              that.disable = true;
+              that.onSave();
+              this.$emit('refreshData');
+              this.$emit("changeShow", editedShow)
+            }).catch(() => {
+              that.disable = true;
+              this.$emit("changeShow", editedShow)
+            });
+          }
+          else {
+            this.$emit("changeShow", editedShow)
+          }
         },
 
         uniqueArray(array, key) {
@@ -703,20 +720,20 @@
           console.log('FileName:', name);
         },
 
-        sendCommit(){
+        sendCommit() {
           let item = this.editedItem;
           let history_c = this.editedItem.history_c;
           let new_comment = {
-            "owner" : this.myInformation._id,
-            "name" : this.myInformation.name,
-            "email" : this.myInformation.email,
-            "content":this.comment,
+            "owner": this.myInformation._id,
+            "name": this.myInformation.name,
+            "email": this.myInformation.email,
+            "content": this.comment,
             "date": new Date().getTime()
           };
           history_c.unshift(new_comment);
           console.log(history_c);
           let data = {
-            "history_c":history_c
+            "history_c": history_c
           }
           this.editedItem.history_c = history_c;
 
@@ -725,12 +742,12 @@
             let url = "/api/project/" + pid + "/update";
 
             postData(this, url, data, () => {
-              let header = this.myInformation.name+"在项目"+this.editedItem.name+"给您留言了";
+              let header = this.myInformation.name + "在项目" + this.editedItem.name + "给您留言了";
               let content = new_comment.content;
-              this.comment="";
+              this.comment = "";
 
-              this.sendNotification(this.editedItem.owner,header,content)
-              this.comment="";
+              this.sendNotification(this.editedItem.owner, header, content)
+              this.comment = "";
               this.$emit('refreshData');
             })
           }
@@ -740,64 +757,64 @@
 
             let url = "/api/asset/update/" + rid + "/of/" + pid;
             postData(this, url, data, () => {
-              let header = this.myInformation.name+"在任务"+this.editedItem.name+"中给您留言了";
+              let header = this.myInformation.name + "在任务" + this.editedItem.name + "中给您留言了";
               let content = new_comment.content;
-              this.comment="";
+              this.comment = "";
 
-              this.sendNotification(this.editedItem.owner,header,content)
+              this.sendNotification(this.editedItem.owner, header, content)
               this.$emit('refreshData');
             })
           }
         },
 
-        deleteTask(model){
+        deleteTask(model) {
 
-          let url,t
-          if(this.target === "project"){
-            url = "/api/project/"+model._id+"/delete";
+          let url, t
+          if (this.target === "project") {
+            url = "/api/project/" + model._id + "/delete";
             t = {
-              "_id":model._id
+              "_id": model._id
             }
 
           }
-          else if(this.target === "task"){
-            url ="/api/asset/delete/"+model.reference_id+"/of/"+model.project;
+          else if (this.target === "task") {
+            url = "/api/asset/delete/" + model.reference_id + "/of/" + model.project;
             t = {
-              "reference_id":model.reference_id
+              "reference_id": model.reference_id
             }
           }
 
-          postData(this,url,t,()=>{
+          postData(this, url, t, () => {
             this.closeDialog();
           });
 
         },
 
-        sendNotification(receiver,header,content){
+        sendNotification(receiver, header, content) {
           let now = new Date().getTime();
-          console.log("now"+now);
-          let url = "/api/notification/to/"+receiver;
+          console.log("now" + now);
+          let url = "/api/notification/to/" + receiver;
 
           let notification = {
-            "to" :receiver,
-            "from":this.myInformation._id,
-            "project":this.target=="project"?this.editedItem._id:this.editedItem.project,
-            "task":this.target=="project"?"pj":this.editedItem.reference_id,
-            "header":header,
+            "to": receiver,
+            "from": this.myInformation._id,
+            "project": this.target == "project" ? this.editedItem._id : this.editedItem.project,
+            "task": this.target == "project" ? "pj" : this.editedItem.reference_id,
+            "header": header,
             "content": content,
-            "is_read":false,
-            "date":now
+            "is_read": false,
+            "date": now
           }
           console.log(notification)
 
-          postData(this,url,notification,()=>{
+          postData(this, url, notification, () => {
             console.log("send")
           })
 
         },
 
+      }
 
-    }
 
 }
 </script>

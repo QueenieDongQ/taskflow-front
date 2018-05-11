@@ -253,7 +253,6 @@
         },
 
         processData(data){
-
           let items = data;
             for (let i = 0; i < items.length; i++) {
               let item = items[i];
@@ -317,7 +316,6 @@
           }
           return arr;
         },
-
 
         getEditedItemLabel(labels){
           let that = this;console.log(labels);

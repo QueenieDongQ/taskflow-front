@@ -15,12 +15,12 @@
       </v-btn>
     </div>
 
-
     <v-layout row>
       <v-flex xs2>
         <v-layout row wrap>
           <v-flex xs12>
-            <v-btn @click="filterFolder =''">Show All Task</v-btn>
+            <v-btn  color="info"
+                    @click="filterFolder =''">Show All Task</v-btn>
           </v-flex>
           <v-flex xs12 style="overflow: scroll">
             <tree
@@ -54,35 +54,38 @@
                   v-for="item in blocks"
                   :slot="item.reference_id"
                   :key="item.reference_id"
-                  style="height:100%;"
+                  style="height:inherit"
                   :class="{'isDelay':(item.dueDateUTC<today && item.dueDateUTC && item.status !='done')}">
 
-                  <v-list>
-                    <v-list-tile avatar
-                                 ripple>
-                      <v-list-tile-content>
-                        <v-list-tile-title>
-                          {{ item.name }}
-                        </v-list-tile-title>
-                        <v-spacer/>
-                        <v-list-tile-sub-title v-if="item.startDate ">
-                          Start:{{item.startDate}}
-                        </v-list-tile-sub-title>
-                        <v-list-tile-sub-title v-if="item.dueDate" >
-                          Due:{{item.dueDate}}
-                        </v-list-tile-sub-title>
-                      </v-list-tile-content>
-                      <v-list-tile-action >
+                    <v-card-title primary-title>
+                      <div class="">
+                        <h4>{{item.name}}</h4>
+                        <div v-if="item.startDate"><span>Start:{{item.startDate}}</span></div>
+                        <div v-if="item.dueDate"><span>Due:{{item.dueDate}}</span></div>
+                      </div>
+                    </v-card-title>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                      <v-avatar
+                        slot="activator"
+                        color="teal"
+                        size="36px"
+                      >
+                        <img
+                          v-if="myInformation.avatar"
+                          :src="owner_Avatar(item.owner)"
+                          alt=""
+                        >
+                        <v-icon dark v-else>account_circle</v-icon>
+                      </v-avatar>
 
-                        <v-btn icon ripple @click="editItem(item)">
-                          <v-icon color="grey lighten-1">info</v-icon>
-                        </v-btn>
-                        <!--<v-icon ><i class="material-icons" color="red">warning</i></v-icon>-->
-                      </v-list-tile-action>
-                    </v-list-tile>
-                  </v-list>
+                    <v-btn icon ripple @click="editItem(item)">
+                      <v-icon color="gray">info</v-icon>
+                    </v-btn>
 
+                  </v-card-actions>
                 </v-card>
+                <v-divider/>
               </kanban>
             </v-flex>
           </v-layout>
@@ -175,6 +178,10 @@
 
     },
 
+    filters:{
+
+    },
+
     computed:{
 
       treelist(){
@@ -237,6 +244,8 @@
         });
         return newArr;
       },
+
+
     },
 
     methods:{
@@ -280,16 +289,31 @@
         return arr;
       },
 
+      owner_Avatar(owner){
+        let that =this;
+
+        let info = that.users.find((v)=>{
+          if(v._id == owner) return v;
+        });
+        console.log("avat",info)
+        if(info.avatar !=undefined || info.avatar) {
+          return info.avatar;
+        }else{
+          return "";
+        }
+      },
+
 
       //拖动看板card 更新数据
       updateBlock: debounce(function (reference_id, status) {
+        let that = this;
 
         let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
 
         let block = this.blocks.find( b => b.reference_id === Number(reference_id));
-        if(block.owner!=this.myInformation._id) {
+        if(block.owner!=that.myInformation._id) {
           alert("对不起，你不是该任务的所有者，没法更改任务状态！");
-          this.fetchData();
+          that.fetchData();
           // return false;
         }else{
           block.status = status;

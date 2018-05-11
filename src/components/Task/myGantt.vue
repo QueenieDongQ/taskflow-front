@@ -1,14 +1,33 @@
 <template>
-  <div class="gantt-container">
-    <gantt-header :onPrev="onPrev"
-                  :onNext="onNext"
-                  :onToday="onToday"></gantt-header>
-    <gantt-body :startDate="ganttStart"
-                :endDate="ganttEnd"
-                :showTaskId="showTaskId"
-                :ganttData="ganttData"></gantt-body>
-  </div>
+  <div>
 
+    <div class="gantt-container">
+      <gantt-header :onPrev="onPrev"
+                    :onNext="onNext"
+                    :onToday="onToday"></gantt-header>
+      <gantt-body :startDate="ganttStart"
+                  :endDate="ganttEnd"
+                  :showTaskId="showTaskId"
+                  :ganttData="ganttData"></gantt-body>
+
+      <div style="position:fixed; bottom:5%; right:0; z-index:10">
+        <v-btn
+          absolute
+          dark
+          fab
+          top
+          right
+          color="deep-orange darken-2"
+          slot="activator"
+          @click="backToPre"
+        >
+          <i class="material-icons">chevron_left</i>
+        </v-btn>
+      </div>
+
+    </div>
+
+  </div>
 </template>
 
 <script>
@@ -217,17 +236,27 @@
             this.getGanttDate()
           }
         }
+      },
+
+      backToPre (){
+        let projectId = this.projectId;
+        this.$router.push({ path: `/projects/${projectId}` })
       }
     },
+
     created () {
       this.initGantt()
       this.$root.$on('task-show', taskId => { window.gantt.selectTask(taskId) })
       this.$root.$on('task-hide', taskId => { window.gantt.unselectTask(taskId) })
     },
+
     destroyed () {
       this.$root.$off('task-show', () => { window.gantt.selectTask() })
       this.$root.$off('task-hide', () => { window.gantt.unselectTask() })
-    }
+    },
+
+
+
   }
 </script>
 <style>
