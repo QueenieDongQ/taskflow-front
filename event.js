@@ -7,11 +7,15 @@ function serve(path) {
   }
   try {
     let certs = require(path);
-    let app = get_express_server(certs, "localhost", 8443);
+
+    let server_path = $("#server-path").val();
+    let server_port = $("#server-port").val();
+    let app = get_express_server(certs, server_path, 8443);
     let port = $("#port").val();
     port = parseInt(port);
     server = app.listen(port);
-    mainView2("http://localhost:"+port+'/');
+    // mainView2("http://localhost:"+port+'/');
+    mainView2("http://"+server_path+":"+port+'/');
   } catch(e) {
     alert(e);
   }
@@ -33,6 +37,7 @@ function mainView2(url) {
 $(document).ready(()=>{
     let path2 = localStorage.getItem('path');
     let server_path2 =localStorage.getItem('server-path');
+    let server_port2 =localStorage.getItem('server-port');
     let port2 =localStorage.getItem('port');
     console.log(server_path2)
     if(path2) {
@@ -40,6 +45,9 @@ $(document).ready(()=>{
     }
     if(server_path2) {
       $("#server-path").val(server_path2);
+    }
+    if(server_port2) {
+      $("#server-port").val(server_port2);
     }
     if(port2) {
       $("#port").val(port2);
@@ -59,9 +67,11 @@ $(document).ready(()=>{
     $('#serve').click(()=>{
         let path = $("#user-file-path").val();
         let server_path = $("#server-path").val();
+        let server_port = $("#server-port").val();
         let port = $("#port").val();
         localStorage.setItem('path', path);
         localStorage.setItem('server-path', server_path);
+        localStorage.setItem('server-port', server_port);
         localStorage.setItem('port', port);
         if(!path) {
             alert('请选择身份验证文件');
@@ -71,10 +81,14 @@ $(document).ready(()=>{
             alert('请输入服务器地址');
             return
         }
-      if(!port){
-        alert('请输入端口号');
-        return
-      }
+        if(!server_port){
+          alert('请输入服务器地址');
+          return
+        }
+        if(!port){
+          alert('请输入端口号');
+          return
+        }
         serve(path)
       $('#serve').attr("disabled",true);
     });
