@@ -327,8 +327,7 @@
           block.children=[];
           postData(this,url,block)
         }
-
-      }, 500),
+      }, 100),
 
       // 点击树结构的文件夹，找到它的下一层 并在看板中筛选出子文件
       onClick(model) {

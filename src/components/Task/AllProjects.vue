@@ -371,7 +371,9 @@
         createProject(){
           // let that = this;
           let project =this.project;
-
+          if(project.name==null || project.code==null ||project.client==null||project.partNumber==null){
+            return;
+          }
           this.project ={
             "name": project.name,
             "code": project.code,
@@ -380,6 +382,8 @@
             "createDate" :new Date().getTime(),
             "startDateUTC" :0,
             "dueDateUTC" :0,
+            "startDate" :'',
+            "dueDate" :'',
             "modifyDateUTC" :new Date().getTime(),
             "members":[],
             "checked":false,

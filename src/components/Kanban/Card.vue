@@ -271,9 +271,9 @@
               <v-icon  dark color="primary">info_outline</v-icon>
             </v-btn>
               <v-card>
+                <v-subheader>零件号历史记录</v-subheader>
                 <v-list two-line subheader>
                   <v-list-tile v-for="(history,index) in editedItem.history_pn" :key="index">
-                    <v-subheader>零件号历史记录</v-subheader>
                     <v-list-tile-content>
                       <v-list-tile-title>
                         V{{index}}:{{history.partNumber}}
@@ -461,7 +461,11 @@
                 result += 1;
               }
             }
-            return parseInt(result/children.length*100);
+            if(children.length==0){
+              return 0
+            }else{
+              return parseInt(result/children.length*100);
+            }
           },
 
         projectId(){
@@ -596,27 +600,32 @@
 
         onSave(item) {
           // this.disable = true;
+          let that = this;
 
           delete item.membersInfo;
           // delete
           item.modifyDateUTC = new Date().getTime();
 
           let children = item.children;
-          item.children = this.saveChildren(children);
+          item.children = that.saveChildren(children);
 
-          if (this.progress == 100) {
+          if (that.progress == 100) {
             item.checked = true;
             item.status = "done";
           }
 
           let pid, rid;
 
-          if (this.target == "project") {
+          if (that.target == "project") {
             /*判断当前零件号信息是否已修改，
               若修改，将信息存入历史记录中  history_pn ==history of part number
              */
-
-            if (this.oldPartNumber.trim() != item.partNumber.trim()) {
+            let a = that.oldPartNumber;
+            let b = item.partNumber;
+            console.log(a==b)
+            // console.log(that.trim2(that.oldPartNumber));
+            // console.log(item.partNumber);
+            if (a != b) {
               item.history_pn.push({
                 "partNumber": item.partNumber,
                 "date": new Date().getTime()
@@ -641,6 +650,10 @@
           }
           this.disable = true;
           this.closeDialog();
+        },
+        trim2(str)
+        {
+          return str.replace(/(^\s*)|(\s*$)/g, '');
         },
 
         saveChildren(children) {
