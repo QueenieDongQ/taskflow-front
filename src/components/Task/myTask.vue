@@ -18,9 +18,13 @@
     <v-layout row>
       <v-flex xs2>
         <v-layout row wrap>
-          <v-flex xs12>
+          <v-flex xs6>
             <v-btn  color="info"
-                    @click="filterFolder =''">Show All Task</v-btn>
+                    @click="showAll">显示所有</v-btn>
+          </v-flex>
+          <v-flex xs6>
+            <v-btn  color="info"
+                    @click="showMine">只看我的</v-btn>
           </v-flex>
           <v-flex xs12 style="overflow: scroll">
             <tree
@@ -55,7 +59,7 @@
                   :slot="item.reference_id"
                   :key="item.reference_id"
                   style="height:inherit"
-                  :class="{'isDelay':(item.dueDateUTC<today && item.dueDateUTC && item.status !='done')}">
+                  :class="[dueDate(item.dueDate,item.status),notMine(item.owner)]">
 
                     <v-card-title primary-title>
                       <div class="">
@@ -72,7 +76,7 @@
                         size="36px"
                       >
                         <img
-                          v-if="myInformation.avatar"
+                          v-if="owner_Avatar(item.owner)!= false"
                           :src="owner_Avatar(item.owner)"
                           alt=""
                         >
@@ -142,24 +146,11 @@
           "todo","progress","done"
         ],
         blocks:[],
+        isMine:false,
         editedInfo:[],
         editedItem:{},
         editedShow:false,
 
-        items: [
-          {
-            title: 'Click Me'
-          },
-          {
-            title: 'Click Me'
-          },
-          {
-            title: 'Click Me'
-          },
-          {
-            title: 'Click Me 2'
-          }
-        ],
         disable:false,
         users:[],
         addingMembers:[],
@@ -190,7 +181,8 @@
 
         let rootArr = blocks.filter((v)=>{
           return v.desc==="root"
-        })
+        });
+
         if(rootArr.length!=0){
           let n = rootArr.length;
           rootArr.forEach((root)=>{
@@ -207,19 +199,26 @@
             }
           })
         }
+
         let tree = [{
           "name":"Project",
           "reference_id":"root",
           "children":newArr,
           "project":this.projectId
         }]
+
         let treeArr = new Tree(tree);
         return treeArr;
       },
 
       filterLists(){
         let lists = this.blocks;
-        // let lists = this.getMyBlocks(this.blocks);
+        let viewMine = this.isMine;
+        if(viewMine==true){
+          lists = this.getMyBlocks(this.blocks);
+        }else{
+          lists = this.blocks;
+        }
         let search = this.search;
         let filterFolder = this.filterFolder;
         search =search.trim().toLowerCase();
@@ -244,7 +243,6 @@
         });
         return newArr;
       },
-
 
     },
 
@@ -291,16 +289,44 @@
 
       owner_Avatar(owner){
         let that =this;
-
         let info = that.users.find((v)=>{
           if(v._id == owner) return v;
         });
-        console.log("avat",info)
-        if(info.avatar !=undefined || info.avatar) {
+        if(info.avatar && info.avatar!="") {
           return info.avatar;
+        }else{
+          return false;
+        }
+      },
+
+      dueDate(dueDate,status){
+        let today = this.today;
+        let result;
+        if(dueDate!=undefined){
+          result = new Date(dueDate).getTime();
+          if(status !="done" && result < today) return "isDelay";
+        }else{
+          return;
+        }
+      },
+
+      notMine(owner){
+        if(owner != this.myInformation._id){
+          return "notMine";
         }else{
           return "";
         }
+      },
+      //按钮 显示所有task
+      showAll(){
+        this.isMine = false;
+        this.filterFolder ="";
+      },
+
+      //按钮 显示我的task
+      showMine(){
+        this.isMine = true;
+        this.filterFolder ="";
       },
 
 
@@ -311,9 +337,12 @@
         let url ="/api/asset/update/"+reference_id+"/of/"+this.projectId;
 
         let block = this.blocks.find( b => b.reference_id === Number(reference_id));
+        let temp = block.status;
         if(block.owner!=that.myInformation._id) {
           alert("对不起，你不是该任务的所有者，没法更改任务状态！");
-          that.fetchData();
+          block.status = temp;
+          console.log(temp)
+          // that.fetchData();
           // return false;
         }else{
           block.status = status;
@@ -341,7 +370,7 @@
       },
 
       editItem(item) {
-        this.editedIndex = this.items.indexOf(item);
+        // this.editedIndex = this.items.indexOf(item);
         this.editedItem = Object.assign({}, item);
         this.editedShow = true;
 
@@ -387,8 +416,8 @@
           this.editedItem.children = result;
           return data;
         })
-
       },
+
       getEditedItemMembers(members){
         let arr=[];
         if(members.length !=0){
@@ -401,6 +430,7 @@
         }
         return arr;
       },
+
       getEditedItemLabel(owner){
         let that = this;
         //只有一个部门 标签
@@ -474,7 +504,7 @@
   }
 </script>
 
-<style scoped>
+<style  lang="scss">
 
   .search{
     width: 60%;
@@ -507,6 +537,69 @@
     list-style-type: dot;
   }
   .isDelay{
-    background-color: red;
+    border:2px solid red;
   }
+
+  @import './../Kanban/kanban.scss';
+  $on-hold: #FB7D44;
+  $in-progress: #2A92BF;
+  $needs-review: #F4CE46;
+  $approved: #00B961;
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: #33363D;
+    color: white;
+    font-family: 'Lato';
+    font-weight: 300;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .drag-column {
+  &-on-hold {
+  .drag-column-header,
+  .is-moved,
+  .drag-options {
+    background: $on-hold;
+  }
+  }
+  &-in-progress {
+  .drag-column-header,
+  .is-moved,
+  .drag-options {
+    background: $in-progress;
+  }
+  }
+  &-needs-review {
+  .drag-column-header,
+  .is-moved,
+  .drag-options{
+    background: $needs-review;
+  }
+  }
+  &-approved {
+  .drag-column-header,
+  .is-moved,
+  .drag-options {
+    background: $approved;
+  }
+  }
+  }
+  .section {
+    padding: 20px;
+    text-align: center;
+  a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+  }
+  h4 {
+    font-weight: 400;
+  a {
+    font-weight: 600;
+  }
+  }
+  }
+
 </style>

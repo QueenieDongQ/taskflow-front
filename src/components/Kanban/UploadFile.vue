@@ -8,9 +8,7 @@
         action=""
         :http-request="uploadFile"
         :on-progress="uploadOnProgress"
-        :disabled="disabled"
         >
-
         <el-button size="small" type="primary" :disabled="disabled">点击上传</el-button>
       </el-upload>
       </form>

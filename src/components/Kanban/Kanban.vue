@@ -59,7 +59,19 @@
         },
       },
       mounted() {
-        dragula(this.$refs.list)
+        dragula(this.$refs.list,{
+          moves: function (el, source, handle, sibling) {
+            console.log(el.children)
+            let containClass = el.children[0].classList.contains('notMine');
+            console.log(containClass)
+            if(containClass==true)return false;
+            return true; // elements are always draggable by default
+          },
+          invalid: function (el, handle) {
+
+            return false; // don't prevent any drags from initiating by default
+          },
+        })
           .on('drag', (el) => {
             el.classList.add('is-moving');
           })

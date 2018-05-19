@@ -849,4 +849,8 @@
     overflow-x: hidden;
     overflow-y: auto;
   }
+
+  .el-footer{
+    /*background-color: #6b6b6b;*/
+  }
 </style>

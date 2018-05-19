@@ -32,7 +32,7 @@
     "loadash": "^1.0.0",
     "moment": "^2.22.0",
     "node-sass": "^4.8.3",
-    "npm": "^5.8.0",
+    "npm": "^5.10.0",
     "sass-loader": "^7.0.1",
     "scss": "^0.2.4",
     "sortablejs": "^1.7.0",
