@@ -10,13 +10,13 @@ import App from './App'
 import router from './router'
 import VueResource from 'vue-resource';
 import store from './store'
-import uploader from 'vue-simple-uploader'
+// import uploader from 'vue-simple-uploader'
 
 Vue.use(Vuex)
 Vue.use(Vuetify)
 Vue.use(ElementUI);
 Vue.use(VueResource)
-Vue.use(uploader)
+// Vue.use(uploader)
 
 Vue.config.productionTip = false
 
