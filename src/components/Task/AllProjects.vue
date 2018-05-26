@@ -364,7 +364,7 @@
               return  v;
             })
             this.editedItem.children = result;
-            return data;
+            // return data;
           })
         },
 
